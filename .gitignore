@@ -3,6 +3,8 @@ phx
 
 # Editor tempfiles, etc.
 *~
+\#*
+.#*
 
 # Binaries for programs and plugins
 *.exe
