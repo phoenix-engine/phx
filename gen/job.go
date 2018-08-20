@@ -69,6 +69,7 @@ func (w Work) Process(path string) (Done, error) {
 		return none, errors.Wrapf(err, "opening %s", path)
 	}
 
+	// Create the file which will contain the static resource class.
 	buf, err := w.tmp.Create(path)
 	if err != nil {
 		return none, errors.Wrapf(err, "opening tempfile %s", path)
