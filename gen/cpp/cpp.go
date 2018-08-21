@@ -10,8 +10,9 @@ import (
 	"github.com/pkg/errors"
 )
 
+// Size constants.
 const (
-	PageSize = 1024
+	PageSize = 4096
 	MaxWidth = 72
 )
 
@@ -38,6 +39,8 @@ func (i Target) ReadFrom(some io.Reader) (int64, error) {
 // TODO: Support Windows-style newline + carriage return?
 //
 // TODO: Optimize for space?  (Base64 / other solutions?)
+//
+// TODO: Add benchmark tests.
 type ArrayWriter struct {
 	pBuf, outBuf *bytes.Buffer
 
@@ -76,6 +79,7 @@ func (a ArrayWriter) Flush() error {
 // from an io.WriterTo.
 func (a ArrayWriter) Write(some []byte) (int, error) {
 	// TODO: Make this more efficient (don't allocate a buffer.)
+	// TODO: Don't always flush, etc.
 	buf := bytes.NewBuffer(some)
 	n, err := a.ReadFrom(buf)
 	return int(n), err
