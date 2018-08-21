@@ -48,10 +48,11 @@ func CheckBufEq(t *tt.T, given, expect []byte) bool {
 	t.Helper()
 
 	if !bytes.Equal(given, expect) {
-		t.Errorf("expected %#q, but got %#q:\n",
-			renderBytes(expect),
+		t.Errorf("expected:\n%#q\nbut got:\n%#q\n",
 			renderBytes(given),
+			renderBytes(expect),
 		)
+
 		// TODO: t.Errorf("diff: %s", renderDiff(given, expect))
 		return false
 	}
