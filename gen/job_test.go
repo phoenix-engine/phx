@@ -11,3 +11,4 @@ import (
 var _ gen.Compressor = new(gzip.Writer)
 var _ gen.Compressor = new(snappy.Writer)
 var _ gen.Compressor = new(lz4.Writer)
+var _ gen.Compressor = new(gen.NoCompress)

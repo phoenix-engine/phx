@@ -25,6 +25,12 @@ type Compressor interface {
 	Flush() error
 }
 
+// NoCompress is a noop Compressor.
+type NoCompress struct{ io.Writer }
+
+func (n *NoCompress) Reset(to io.Writer) { n.Writer = to }
+func (NoCompress) Flush() error          { return nil }
+
 type Work struct {
 	from, tmp fs.FS
 
