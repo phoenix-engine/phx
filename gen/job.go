@@ -4,8 +4,8 @@ import (
 	"io"
 
 	"github.com/synapse-garden/phx/fs"
+	"github.com/synapse-garden/phx/gen/cpp"
 
-	"github.com/golang/snappy"
 	"github.com/pkg/errors"
 )
 
@@ -19,6 +19,12 @@ func MakeChans() (chan Job, chan Done, chan struct{}, chan error) {
 		make(chan error)
 }
 
+type Compressor interface {
+	Reset(to io.Writer)
+	Write([]byte) (int, error)
+	Flush() error
+}
+
 type Work struct {
 	from, tmp fs.FS
 
@@ -27,7 +33,7 @@ type Work struct {
 	Kill <-chan struct{}
 	Errs chan<- error
 
-	Snap *snappy.Writer
+	Compressor
 }
 
 func (w Work) Run() {
@@ -63,8 +69,10 @@ func (w Work) Run() {
 // When it is finished, the finished file is in w.tmp.
 func (w Work) Process(path string) (Done, error) {
 	var none Done
+	var ff io.ReadCloser
+	var err error
 
-	ff, err := w.from.Open(path)
+	ff, err = w.from.Open(path)
 	if err != nil {
 		return none, errors.Wrapf(err, "opening %s", path)
 	}
@@ -74,14 +82,20 @@ func (w Work) Process(path string) (Done, error) {
 	if err != nil {
 		return none, errors.Wrapf(err, "opening tempfile %s", path)
 	}
-	w.Snap.Reset(buf)
 
-	if _, err := io.Copy(w.Snap, ff); err != nil {
+	aw := cpp.NewArrayWriter(buf)
+	w.Reset(aw)
+
+	if _, err := io.Copy(w, ff); err != nil {
 		return none, errors.Wrapf(err, "encoding %s", path)
 	}
 
-	if err := w.Snap.Flush(); err != nil {
-		return none, errors.Wrapf(err, "flushing %s", path)
+	if err := w.Flush(); err != nil {
+		return none, errors.Wrapf(err, "flushing compressor from %s", path)
+	}
+
+	if err := aw.Flush(); err != nil {
+		return none, errors.Wrapf(err, "flushing encoder for %s", path)
 	}
 
 	if err := ff.Close(); err != nil {

@@ -5,12 +5,16 @@ import (
 
 	"github.com/synapse-garden/phx/fs"
 
-	"github.com/golang/snappy"
+	"github.com/pierrec/lz4"
 	"github.com/pkg/errors"
 )
 
+// Gen uses Operate to process files in the FS given as From, and copies
+// its output to To after processing is completed successfully.  It uses
+// a temporary buffer for staging before completion.
 type Gen struct{ From, To fs.FS }
 
+// Operate processes files as in the description of the type.
 func (g Gen) Operate() error {
 	// TODO: Describe pipelines with a graph file.
 	// TODO: Generate and check resource manifest for changes.
@@ -31,13 +35,13 @@ func (g Gen) Operate() error {
 	for i := 0; i < runtime.NumCPU(); i++ {
 		// TODO: Use real tmpdir for very large resources.
 		go Work{
-			from: g.From,
-			tmp:  tmpFS,
-			Jobs: jobs,
-			Done: dones,
-			Kill: kill,
-			Errs: errs,
-			Snap: snappy.NewBufferedWriter(nil),
+			from:       g.From,
+			tmp:        tmpFS,
+			Jobs:       jobs,
+			Done:       dones,
+			Kill:       kill,
+			Errs:       errs,
+			Compressor: lz4.NewWriter(nil),
 		}.Run()
 	}
 
