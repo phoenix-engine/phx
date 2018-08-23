@@ -67,6 +67,15 @@
   version = "v1.2.0"
 
 [[projects]]
+  name = "github.com/pierrec/lz4"
+  packages = [
+    ".",
+    "internal/xxh32"
+  ]
+  revision = "1958fd8fff7f115e79725b1288e0b878b3e06b00"
+  version = "v2.0.3"
+
+[[projects]]
   name = "github.com/pkg/errors"
   packages = ["."]
   revision = "645ef00459ed84a119197bfb8d8205042c6df63d"
@@ -139,6 +148,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "f050ae5c7e3d4da63675eed6a496b2795016af79c4f3a0df4182df7a9b15ce67"
+  inputs-digest = "a211f75addcb30c314a2f4b8968ec43fc433461408c83fbc346f315507b621df"
   solver-name = "gps-cdcl"
   solver-version = 1
