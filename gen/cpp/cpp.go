@@ -17,6 +17,8 @@ const (
 )
 
 // Target is a complete C++ static asset class.
+//
+// TODO: cpp.Target is just a wrapper for a handful of C helpers.
 type Target struct{ Name string }
 
 // Write implements io.Writer, encoding bytes into array literals.
@@ -29,7 +31,8 @@ func (i Target) ReadFrom(some io.Reader) (int64, error) {
 	return 0, nil
 }
 
-// ArrayWriter consumes bytes and formats them as a C++ array literal.//
+// ArrayWriter consumes bytes and formats them as a C++ array literal.
+//
 // TODO: Set an unrecoverable error state to indicate that internal
 // state may be unusable.
 //

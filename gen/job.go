@@ -92,9 +92,12 @@ func (w Work) Process(path string) (Done, error) {
 	aw := cpp.NewArrayWriter(buf)
 	w.Reset(aw)
 
-	if _, err := io.Copy(w, ff); err != nil {
+	n, err := io.Copy(w, ff)
+	if err != nil {
 		return none, errors.Wrapf(err, "encoding %s", path)
 	}
+	// TODO: Encode bytes.
+	println("bytes: ", n)
 
 	if err := w.Flush(); err != nil {
 		return none, errors.Wrapf(err, "flushing compressor from %s", path)
