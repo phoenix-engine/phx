@@ -1,6 +1,7 @@
 package gen
 
 import (
+	"fmt"
 	"runtime"
 
 	"github.com/synapse-garden/phx/fs"
@@ -41,7 +42,7 @@ func (g Gen) Operate() error {
 			Done:       dones,
 			Kill:       kill,
 			Errs:       errs,
-			Compressor: lz4.NewWriter(nil),
+			Compressor: LZ4{lz4.NewWriter(nil)},
 		}.Run()
 	}
 
@@ -61,7 +62,8 @@ func (g Gen) Operate() error {
 			close(kill)
 			return err
 
-		case <-dones:
+		case d := <-dones:
+			fmt.Printf("%s: %d\n", d.Name, d.Size)
 		}
 	}
 

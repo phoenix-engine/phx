@@ -10,7 +10,10 @@ import (
 )
 
 type Job struct{ Name string }
-type Done struct{ Name string }
+type Done struct {
+	Name string
+	Size int64
+}
 
 func MakeChans() (chan Job, chan Done, chan struct{}, chan error) {
 	return make(chan Job),
@@ -18,18 +21,6 @@ func MakeChans() (chan Job, chan Done, chan struct{}, chan error) {
 		make(chan struct{}),
 		make(chan error)
 }
-
-type Compressor interface {
-	Reset(to io.Writer)
-	Write([]byte) (int, error)
-	Flush() error
-}
-
-// NoCompress is a noop Compressor.
-type NoCompress struct{ io.Writer }
-
-func (n *NoCompress) Reset(to io.Writer) { n.Writer = to }
-func (NoCompress) Flush() error          { return nil }
 
 type Work struct {
 	from, tmp fs.FS
@@ -73,12 +64,8 @@ func (w Work) Run() {
 
 // Process encodes the file into a buffer using Snappy and returns it.
 // When it is finished, the finished file is in w.tmp.
-func (w Work) Process(path string) (Done, error) {
-	var none Done
-	var ff io.ReadCloser
-	var err error
-
-	ff, err = w.from.Open(path)
+func (w Work) Process(path string) (none Done, err error) {
+	ff, err := w.from.Open(path)
 	if err != nil {
 		return none, errors.Wrapf(err, "opening %s", path)
 	}
@@ -92,28 +79,31 @@ func (w Work) Process(path string) (Done, error) {
 	aw := cpp.NewArrayWriter(buf)
 	w.Reset(aw)
 
+	// Encode the input file using the Compressor.
 	n, err := io.Copy(w, ff)
 	if err != nil {
 		return none, errors.Wrapf(err, "encoding %s", path)
 	}
-	// TODO: Encode bytes.
-	println("bytes: ", n)
 
+	// Flush the compressor into the literal encoder.
 	if err := w.Flush(); err != nil {
 		return none, errors.Wrapf(err, "flushing compressor from %s", path)
 	}
 
+	// Flush the literal encoder into the outfile.
 	if err := aw.Flush(); err != nil {
 		return none, errors.Wrapf(err, "flushing encoder for %s", path)
 	}
 
+	// Close the output file.
 	if err := ff.Close(); err != nil {
 		return none, errors.Wrapf(err, "closing input file %s", path)
 	}
 
+	// Close the input file.
 	if err := buf.Close(); err != nil {
 		return none, errors.Wrapf(err, "closing tmpfile %s", path)
 	}
 
-	return Done{path}, nil
+	return Done{Name: path, Size: n}, nil
 }
