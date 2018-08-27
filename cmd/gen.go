@@ -36,22 +36,23 @@ var genCmd = &cobra.Command{
 	Long:  ``,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		return gen.Gen{
-			From: fs.Real{*from},
-			To:   fs.Real{*to},
-			Level: func() gen.Level {
-				switch *level {
-				case 0:
-					return gen.Fastest
-				case 1:
-					return gen.Medium
-				case 2, 3:
-					return gen.High
-				case 9:
-					return gen.LZ4HC
-				default:
-					return gen.Medium
-				}
-			}(),
+			From:  fs.Real{*from},
+			To:    fs.Real{*to},
+			Level: gen.Fastest,
+			// func() gen.Level {
+			// switch *level {
+			// case 0:
+			// 	return gen.Fastest
+			// case 1:
+			// 	return gen.Medium
+			// case 2, 3:
+			// 	return gen.High
+			// case 9:
+			// 	return gen.LZ4HC
+			// default:
+			// 	return gen.Medium
+			// }
+			// }(),
 		}.Operate()
 	},
 }
@@ -71,7 +72,8 @@ func init() {
 	)
 	genCmd.PersistentFlags().IntVarP(
 		level, "level", "l",
-		9,
-		"The compression level to use (0, 1, 2, 3, 9)",
+		0,
+		"The compression level to use (0, 1, 2, 3, 9) "+
+			"NOTE: > 0 unsupported due to bug",
 	)
 }
