@@ -44,9 +44,9 @@ var genCmd = &cobra.Command{
 					return gen.Fastest
 				case 1:
 					return gen.Medium
-				case 2:
+				case 2, 3:
 					return gen.High
-				case 3:
+				case 9:
 					return gen.LZ4HC
 				default:
 					return gen.Medium
@@ -71,7 +71,7 @@ func init() {
 	)
 	genCmd.PersistentFlags().IntVarP(
 		level, "level", "l",
-		int(gen.Fastest),
-		"The compression level to use (0, 1, 2, 3)",
+		9,
+		"The compression level to use (0, 1, 2, 3, 9)",
 	)
 }

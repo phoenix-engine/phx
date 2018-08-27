@@ -72,8 +72,10 @@ func (l LZ4) Reset(w io.Writer) {
 				return 0
 			case Medium:
 				return 3
-			case LZ4HC, High:
-				return 7
+			case High:
+				return 5
+			case LZ4HC:
+				return 9
 			default:
 				return 3
 			}
