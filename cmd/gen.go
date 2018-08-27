@@ -25,6 +25,8 @@ import (
 var (
 	from = new(string)
 	to   = new(string)
+
+	level = new(int)
 )
 
 // genCmd represents the gen command
@@ -36,6 +38,20 @@ var genCmd = &cobra.Command{
 		return gen.Gen{
 			From: fs.Real{*from},
 			To:   fs.Real{*to},
+			Level: func() gen.Level {
+				switch *level {
+				case 0:
+					return gen.Fastest
+				case 1:
+					return gen.Medium
+				case 2:
+					return gen.High
+				case 3:
+					return gen.LZ4HC
+				default:
+					return gen.Medium
+				}
+			}(),
 		}.Operate()
 	},
 }
@@ -43,6 +59,19 @@ var genCmd = &cobra.Command{
 func init() {
 	rootCmd.AddCommand(genCmd)
 
-	genCmd.PersistentFlags().StringVar(from, "from", "res", "Where to read static resources")
-	genCmd.PersistentFlags().StringVar(to, "to", "gen", "Where to write generated resources")
+	genCmd.PersistentFlags().StringVar(
+		from, "from",
+		"res",
+		"Where to read static resources",
+	)
+	genCmd.PersistentFlags().StringVar(
+		to, "to",
+		"gen",
+		"Where to write generated resources",
+	)
+	genCmd.PersistentFlags().IntVarP(
+		level, "level", "l",
+		int(gen.Fastest),
+		"The compression level to use (0, 1, 2, 3)",
+	)
 }

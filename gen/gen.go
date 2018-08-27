@@ -13,7 +13,10 @@ import (
 // Gen uses Operate to process files in the FS given as From, and copies
 // its output to To after processing is completed successfully.  It uses
 // a temporary buffer for staging before completion.
-type Gen struct{ From, To fs.FS }
+type Gen struct {
+	From, To fs.FS
+	Level
+}
 
 // Operate processes files as in the description of the type.
 func (g Gen) Operate() error {
@@ -42,7 +45,7 @@ func (g Gen) Operate() error {
 			Done:       dones,
 			Kill:       kill,
 			Errs:       errs,
-			Compressor: LZ4{lz4.NewWriter(nil)},
+			Compressor: LZ4{lz4.NewWriter(nil), g.Level},
 		}.Run()
 	}
 
