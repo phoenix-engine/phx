@@ -24,7 +24,8 @@ const (
 
 func PrepareTarget(over fs.FS, using compress.Maker) Target {
 	return Target{
-		FS: over,
+		FS:        over,
+		WaitGroup: new(sync.WaitGroup),
 		// The Target has a Pool of compressors, which will be
 		// created and returned as needed.
 		Pool: &sync.Pool{
@@ -52,39 +53,36 @@ type Target struct {
 // Create creates a Resource which the static asset will be written to,
 // which uses a Compressor from the Target's pool.
 func (t Target) Create(name string) (io.WriteCloser, error) {
-	t.Add(1)
+	// Create a Resource to manage the creation of the asset and its
+	// variable declaration.  The project layout is created in
+	// Finalize() using the full Resource list.
+	res := &Resource{Name: name}
 
 	// Create the asset container.
-	assetF, err := t.FS.Create(name)
+	assetF, err := t.FS.Create(t.FS.Join("res", name))
 	if err != nil {
-		return nil, errors.Wrapf(err, "creating %s", name)
+		return nil, errors.Wrapf(err, "creating asset %s", name)
 	}
 
 	// Create the variable declaration file for the resource.
-	declF, err := t.FS.Create(name)
+	declF, err := t.FS.Create(t.FS.Join("res", name+".cpp"))
 	if err != nil {
-		return nil, errors.Wrapf(err, "creating %s", name)
+		return nil, errors.Wrapf(err, "creating decl %s", name)
 	}
 
-	var (
-		comp = t.Get().(compress.Compressor)
-		aw   = NewArrayWriter(assetF)
-
-		// Create a Resource to manage the creation of the asset
-		// and its variable declaration.  The project layout is
-		// created in Finalize() using the full Resource list.
-		res = &Resource{
-			Name: name,
-			Into: aw,
-			Decl: declF,
-		}
-
-		done = make(chan struct{})
-	)
-
+	// Fetch and prepare a new Compressor over an ArrayWriter.
+	comp := t.Get().(compress.Compressor)
+	aw := NewArrayWriter(assetF)
 	comp.Reset(aw)
+	res.Into, res.Decl = aw, declF
+
+	done := make(chan struct{})
+	t.Add(1)
 
 	go func() {
+		// Decrement the waitgroup when all finished.
+		defer t.Done()
+
 		// Wait for the Resource to be Closed.  When it is, it
 		// wil be added to the list of finished resources.
 		<-done
@@ -97,9 +95,6 @@ func (t Target) Create(name string) (io.WriteCloser, error) {
 		// waiting channel send after it's finished encoding.
 		// These will be consumed in Finalize().
 		t.done <- *res
-
-		// Decrement the waitgroup.
-		t.Done()
 	}()
 
 	return DoneCloser{res, done}, nil
@@ -124,12 +119,14 @@ func (t Target) Finalize() error {
 		}
 	}()
 
+	// TODO:
 	// Additionally, the header and implementation files must be
 	// generated, other than the Resources-dependent ones.
 
 	// err := CreateImplementations(t.FS)
 
 	t.Wait()
+	close(t.done)
 
 	// Have to wait for all Resource names to be processed.
 	sort.Sort(res)

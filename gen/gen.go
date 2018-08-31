@@ -83,7 +83,13 @@ func (g Gen) Operate() error {
 	// shall be moved over to the target.
 
 	// TODO: Make this concurrent?
-	for _, fi := range fis {
+	// TODO: Range over filesystem instead?
+	tmpFis, err := tmpFS.ReadDir("")
+	if err != nil {
+		return errors.Wrap(err, "reading tempdir")
+	}
+
+	for _, fi := range tmpFis {
 		name := fi.Name()
 		if err := fs.Move(tmpFS, g.To, name, name); err != nil {
 			return errors.Wrapf(err, "finalizing %s", name)
