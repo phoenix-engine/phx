@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"io"
 	"os"
+	"sort"
 	"sync"
 
 	kfs "github.com/kr/fs"
@@ -19,6 +20,15 @@ type Mem struct {
 	bufs map[string]BufCloser
 }
 
+type MemInfo struct {
+	os.FileInfo
+	name string
+}
+
+func (m MemInfo) Name() string {
+	return m.name
+}
+
 type SyncMem struct {
 	*sync.RWMutex
 	Mem
@@ -30,6 +40,27 @@ func MakeSyncMem() SyncMem {
 		new(sync.RWMutex),
 		MakeMem(),
 	}
+}
+
+func (m Mem) ReadDir(some string) (infos []os.FileInfo, err error) {
+	var names []string
+	for k := range m.bufs {
+		names = append(names, k)
+	}
+	sort.Strings(names)
+	for _, name := range names {
+		infos = append(infos, MemInfo{name: name})
+	}
+
+	return
+}
+
+func (m Mem) Join(subs ...string) string {
+	return Real{}.Join(subs...)
+}
+
+func (m Mem) Split(some string) (parent, rest string) {
+	return Real{}.Split(some)
 }
 
 func (m Mem) Open(path string) (io.ReadCloser, error) {
