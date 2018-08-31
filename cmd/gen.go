@@ -18,6 +18,7 @@ package cmd
 import (
 	"github.com/synapse-garden/phx/fs"
 	"github.com/synapse-garden/phx/gen"
+	"github.com/synapse-garden/phx/gen/compress"
 
 	"github.com/spf13/cobra"
 )
@@ -38,7 +39,7 @@ var genCmd = &cobra.Command{
 		return gen.Gen{
 			From:  fs.Real{*from},
 			To:    fs.Real{*to},
-			Level: gen.Fastest,
+			Level: compress.Fastest,
 			// func() gen.Level {
 			// switch *level {
 			// case 0:
