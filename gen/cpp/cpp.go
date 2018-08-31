@@ -138,7 +138,7 @@ func (t Target) Finalize() error {
 	ccs := []Creator{
 		Names(res),
 		ID(res),
-		Mapping(res),
+		Mappings(res),
 		Mapper(res),
 	}
 

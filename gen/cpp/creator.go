@@ -11,21 +11,21 @@ type TemplateID int
 
 // Template ID constants.
 const (
-	IDNames TemplateID = iota
-	IDID
-	IDMapping
-	IDMapper
+	TmpNames TemplateID = iota
+	TmpID
+	TmpMappings
+	TmpMapper
 )
 
 var templates = map[TemplateID]string{
-	IDNames:   namesTmp,
-	IDID:      idTmp,
-	IDMapping: mappingTmp,
-	IDMapper:  mapperTmp,
+	TmpNames:    namesTmp,
+	TmpID:       idTmp,
+	TmpMappings: mappingsTmp,
+	TmpMapper:   mapperTmp,
 }
 
 func Execute(f fs.FS, t *template.Template, args interface{}) error {
-	ff, err := f.Create("id.hpp")
+	ff, err := f.Create(t.Name())
 	if err != nil {
 		return errors.Wrapf(err, "creating %s", t.Name())
 	}
@@ -37,9 +37,7 @@ func Execute(f fs.FS, t *template.Template, args interface{}) error {
 	return errors.Wrapf(ff.Close(), "closing %s", t.Name())
 }
 
-type Creator interface {
-	Create(fs.FS) error
-}
+type Creator interface{ Create(fs.FS) error }
 
 type Names Resources
 
@@ -52,7 +50,7 @@ type ID Resources
 
 // Create a header defining an enum of IDs.
 func (i ID) Create(f fs.FS) error {
-	tmp, err := template.New("id.hpp").Parse(templates[IDID])
+	tmp, err := template.New("id.hpp").Parse(templates[TmpID])
 	if err != nil {
 		return errors.Wrap(err, "parsing id.hpp template")
 	}
@@ -60,10 +58,15 @@ func (i ID) Create(f fs.FS) error {
 	return Execute(f, tmp, i)
 }
 
-type Mapping Resources
+type Mappings Resources
 
-func (m Mapping) Create(f fs.FS) error {
-	return nil
+func (m Mappings) Create(f fs.FS) error {
+	tmp, err := template.New("mappings.cxx").Parse(templates[TmpMappings])
+	if err != nil {
+		return errors.Wrap(err, "parsing mappings.cxx template")
+	}
+
+	return Execute(f, tmp, m)
 }
 
 type Mapper Resources
