@@ -5,8 +5,9 @@ import (
 	"runtime"
 
 	"github.com/synapse-garden/phx/fs"
+	"github.com/synapse-garden/phx/gen/compress"
+	"github.com/synapse-garden/phx/gen/cpp"
 
-	"github.com/pierrec/lz4"
 	"github.com/pkg/errors"
 )
 
@@ -15,7 +16,7 @@ import (
 // a temporary buffer for staging before completion.
 type Gen struct {
 	From, To fs.FS
-	Level
+	compress.Level
 }
 
 // Operate processes files as in the description of the type.
@@ -32,20 +33,23 @@ func (g Gen) Operate() error {
 	// in the tmp destination.  After they're all done, move them
 	// all into the target destination.
 
-	jobs, dones, kill, errs := MakeChans()
+	var (
+		jobs, dones, kill, errs = MakeChans()
 
-	tmpFS := fs.MakeSyncMem()
+		tmpFS   = fs.MakeSyncMem()
+		maker   = compress.LZ4Maker{g.Level}
+		encoder = cpp.PrepareTarget(tmpFS, maker)
+	)
 
 	for i := 0; i < runtime.NumCPU(); i++ {
 		// TODO: Use real tmpdir for very large resources.
 		go Work{
-			from:       g.From,
-			tmp:        tmpFS,
-			Jobs:       jobs,
-			Done:       dones,
-			Kill:       kill,
-			Errs:       errs,
-			Compressor: LZ4{lz4.NewWriter(nil), g.Level},
+			from:    g.From,
+			Jobs:    jobs,
+			Done:    dones,
+			Kill:    kill,
+			Errs:    errs,
+			Encoder: encoder,
 		}.Run()
 	}
 
@@ -68,6 +72,11 @@ func (g Gen) Operate() error {
 		case d := <-dones:
 			fmt.Printf("%s: %d\n", d.Name, d.Size)
 		}
+	}
+
+	if err := encoder.Finalize(); err != nil {
+		// Do any last synchronous cleanup the Encoder requires.
+		return errors.Wrap(err, "finalizing Encoder")
 	}
 
 	// All finished tmpfiles are now in the tmp destination and

@@ -4,7 +4,6 @@ import (
 	"io"
 
 	"github.com/synapse-garden/phx/fs"
-	"github.com/synapse-garden/phx/gen/cpp"
 
 	"github.com/pkg/errors"
 )
@@ -23,14 +22,16 @@ func MakeChans() (chan Job, chan Done, chan struct{}, chan error) {
 }
 
 type Work struct {
-	from, tmp fs.FS
+	from fs.FS
 
 	Jobs <-chan Job
 	Done chan<- Done
 	Kill <-chan struct{}
 	Errs chan<- error
 
-	Compressor
+	// The Encoder is responsible for creating and finalizing the
+	// output files for the specific implementation.
+	Encoder
 }
 
 func (w Work) Run() {
@@ -62,7 +63,7 @@ func (w Work) Run() {
 	}
 }
 
-// Process encodes the file into a buffer using Snappy and returns it.
+// Process encodes the file into a buffer using LZ4 and returns it.
 // When it is finished, the finished file is in w.tmp.
 func (w Work) Process(path string) (none Done, err error) {
 	ff, err := w.from.Open(path)
@@ -70,39 +71,26 @@ func (w Work) Process(path string) (none Done, err error) {
 		return none, errors.Wrapf(err, "opening %s", path)
 	}
 
-	// Create the file which will contain the static resource class.
-	buf, err := w.tmp.Create(path)
+	out, err := w.Encoder.Create(path)
 	if err != nil {
 		return none, errors.Wrapf(err, "opening tempfile %s", path)
 	}
 
-	aw := cpp.NewArrayWriter(buf)
-	w.Reset(aw)
-
-	// Encode the input file using the Compressor.
-	n, err := io.Copy(w, ff)
+	// Encode the asset file using the Encoder's provided writer.
+	n, err := io.Copy(out, ff)
 	if err != nil {
 		return none, errors.Wrapf(err, "encoding %s", path)
 	}
 
-	// Flush the compressor into the literal encoder.
-	if err := w.Flush(); err != nil {
-		return none, errors.Wrapf(err, "flushing compressor from %s", path)
-	}
-
-	// Flush the literal encoder into the outfile.
-	if err := aw.Flush(); err != nil {
-		return none, errors.Wrapf(err, "flushing encoder for %s", path)
-	}
-
-	// Close the output file.
+	// Close the input file.
 	if err := ff.Close(); err != nil {
 		return none, errors.Wrapf(err, "closing input file %s", path)
 	}
 
-	// Close the input file.
-	if err := buf.Close(); err != nil {
-		return none, errors.Wrapf(err, "closing tmpfile %s", path)
+	// Close / Flush the Encoder's writer.  The implementation may
+	// create or write more files, etc.
+	if err := out.Close(); err != nil {
+		return none, errors.Wrapf(err, "flushing compressor from %s", path)
 	}
 
 	return Done{Name: path, Size: n}, nil

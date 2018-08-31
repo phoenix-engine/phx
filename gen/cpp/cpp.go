@@ -3,11 +3,17 @@ package cpp
 import (
 	"bytes"
 	"encoding/hex"
+	"fmt"
 	"io"
+	"sort"
 	"strconv"
+	"strings"
+	"sync"
 	"unicode"
 
 	"github.com/pkg/errors"
+	"github.com/synapse-garden/phx/fs"
+	"github.com/synapse-garden/phx/gen/compress"
 )
 
 // Size constants.
@@ -16,19 +22,143 @@ const (
 	MaxWidth = 72
 )
 
+func PrepareTarget(over fs.FS, using compress.Maker) Target {
+	return Target{
+		FS: over,
+		// The Target has a Pool of compressors, which will be
+		// created and returned as needed.
+		Pool: &sync.Pool{
+			New: func() interface{} { return using.Make() },
+		},
+
+		done: make(chan Resource),
+	}
+}
+
 // Target is a complete C++ static asset class.
 //
 // TODO: cpp.Target is just a wrapper for a handful of C helpers.
-type Target struct{ Name string }
+type Target struct {
+	fs.FS
+	*sync.WaitGroup
+	*sync.Pool
 
-// Write implements io.Writer, encoding bytes into array literals.
-func (i Target) Write(some []byte) (int, error) {
-	return 0, nil
+	done chan Resource
+
+	// TODO: Cancel()
+	cancel chan struct{}
 }
 
-// ReadFrom implements io.ReaderFrom for the purpose of io.Copy.
-func (i Target) ReadFrom(some io.Reader) (int64, error) {
-	return 0, nil
+// Create creates a Resource which the static asset will be written to,
+// which uses a Compressor from the Target's pool.
+func (t Target) Create(name string) (io.WriteCloser, error) {
+	t.Add(1)
+
+	// Create the asset container.
+	assetF, err := t.FS.Create(name)
+	if err != nil {
+		return nil, errors.Wrapf(err, "creating %s", name)
+	}
+
+	// Create the variable declaration file for the resource.
+	declF, err := t.FS.Create(name)
+	if err != nil {
+		return nil, errors.Wrapf(err, "creating %s", name)
+	}
+
+	var (
+		comp = t.Get().(compress.Compressor)
+		aw   = NewArrayWriter(assetF)
+
+		// Create a Resource to manage the creation of the asset
+		// and its variable declaration.  The project layout is
+		// created in Finalize() using the full Resource list.
+		res = &Resource{
+			Name: name,
+			Into: aw,
+			Decl: declF,
+		}
+
+		done = make(chan struct{})
+	)
+
+	comp.Reset(aw)
+
+	go func() {
+		// Wait for the Resource to be Closed.  When it is, it
+		// wil be added to the list of finished resources.
+		<-done
+
+		// Reset and recycle the Compressor.
+		comp.Reset(nil)
+		t.Put(comp)
+
+		// t.done is unbuffered, so every Resource will have a
+		// waiting channel send after it's finished encoding.
+		// These will be consumed in Finalize().
+		t.done <- *res
+
+		// Decrement the waitgroup.
+		t.Done()
+	}()
+
+	return DoneCloser{res, done}, nil
+}
+
+type allErrs []error
+
+func (a allErrs) Error() string {
+	var b []string
+	for _, e := range a {
+		b = append(b, e.Error())
+	}
+	return fmt.Sprintf("%d errors: "+strings.Join(b, "; "), len(b))
+}
+
+func (t Target) Finalize() error {
+	var res Resources
+	go func() {
+		for re := range t.done {
+			// Each one represents two files.
+			res = append(res, re)
+		}
+	}()
+
+	// Additionally, the header and implementation files must be
+	// generated, other than the Resources-dependent ones.
+
+	// err := CreateImplementations(t.FS)
+
+	t.Wait()
+
+	// Have to wait for all Resource names to be processed.
+	sort.Sort(res)
+
+	// TODO: use templates from a subrepo / subfolder.
+	ccs := []Creator{
+		Names(res),
+		ID(res),
+		Mapping(res),
+		Mapper(res),
+	}
+
+	errs := make(chan error)
+	for _, cc := range ccs {
+		go func(c Creator) { errs <- c.Create(t.FS) }(cc)
+	}
+
+	var ees allErrs
+	for i := 0; i < len(ccs); i++ {
+		if err := <-errs; err != nil {
+			ees = append(ees, err)
+		}
+	}
+
+	if ees == nil {
+		// A nil slice isn't a nil error interface.
+		return nil
+	}
+	return ees
 }
 
 // ArrayWriter consumes bytes and formats them as a C++ array literal.
@@ -49,13 +179,13 @@ type ArrayWriter struct {
 
 	lBuf []byte
 
-	Into io.Writer
+	Into io.WriteCloser
 }
 
 // NewArrayWriter constructs a new ArrayWriter over the given writer.
-func NewArrayWriter(over io.Writer) ArrayWriter {
+func NewArrayWriter(over io.WriteCloser) ArrayWriter {
 	var (
-		// Page buffer
+		// Page buffer, output buffer
 		pBuf, outBuf = new(bytes.Buffer), new(bytes.Buffer)
 
 		// Line buffer plus 1 for terminal newline.
@@ -76,6 +206,15 @@ func (a ArrayWriter) Flush() error {
 	defer a.outBuf.Reset()
 	_, err := io.Copy(a.Into, a.outBuf)
 	return errors.Wrap(err, "flushing buffer")
+}
+
+// Close calls Flush and then closes the underlying WriteCloser if
+// successful.  It may not be used after this.
+func (a ArrayWriter) Close() error {
+	if err := a.Flush(); err != nil {
+		return err
+	}
+	return a.Into.Close()
 }
 
 // Write implements io.Writer on ArrayWriter for the purpose of Copy

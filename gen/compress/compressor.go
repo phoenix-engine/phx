@@ -1,10 +1,18 @@
-package gen
+package compress
 
 import (
 	"io"
-
-	"github.com/pierrec/lz4"
 )
+
+type Maker interface {
+	Make() Compressor
+}
+
+type NoMaker struct{}
+
+func (NoMaker) Make() Compressor {
+	return &NoCompress{nil}
+}
 
 // Compressor implements a simple common interface across compressors.
 // Note that some compressors require a call to Close to finalize the
@@ -52,33 +60,5 @@ func (l Level) String() string {
 		return "lz4hc"
 	default:
 		return "unknown"
-	}
-}
-
-// LZ4 is a wrapper for lz4.Writer which calls Close on Flush.
-type LZ4 struct {
-	*lz4.Writer
-	Level
-}
-
-// Flush flushes and finalizes the LZ4 block stream.
-func (l LZ4) Flush() error { return l.Writer.Close() }
-func (l LZ4) Reset(w io.Writer) {
-	l.Writer.Reset(w)
-	l.Writer.Header = lz4.Header{
-		CompressionLevel: func() int {
-			switch l.Level {
-			case Fastest:
-				return 0
-			case Medium:
-				return 3
-			case High:
-				return 5
-			case LZ4HC:
-				return 9
-			default:
-				return 3
-			}
-		}(),
 	}
 }

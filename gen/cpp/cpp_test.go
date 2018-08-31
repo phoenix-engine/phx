@@ -7,14 +7,18 @@ import (
 	"testing"
 	"unicode"
 
+	"github.com/synapse-garden/phx/gen"
 	"github.com/synapse-garden/phx/gen/cpp"
 	pt "github.com/synapse-garden/phx/testing"
 )
 
 var (
 	ct cpp.Target
-	_  = io.Writer(ct)
-	_  = io.ReaderFrom(ct)
+	_  = gen.Encoder(ct)
+
+	aw cpp.ArrayWriter
+	_  = io.WriteCloser(aw)
+	_  = io.ReaderFrom(aw)
 )
 
 func makeLongBuffer() *bytes.Buffer {
@@ -89,8 +93,8 @@ func TestArrayWriter(t *testing.T) {
 	}} {
 		t.Logf("test %d: should %s", i, test.should)
 
-		var tmp bytes.Buffer
-		aw := cpp.NewArrayWriter(&tmp)
+		tmp := bcl{new(bytes.Buffer)}
+		aw := cpp.NewArrayWriter(tmp)
 
 		n, err := io.Copy(aw, test.given)
 		if !pt.CheckErrMatches(t, err, test.expectErr) {
