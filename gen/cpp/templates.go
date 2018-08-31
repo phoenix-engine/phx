@@ -1,6 +1,7 @@
 package cpp
 
 // TODO: Read templates from a template directory.
+// TODO: Add a "phx gen" helper for cloning / browsing templates
 var namesTmp = `
 #ifndef PHX_RES_ID
 #define PHX_RES_ID
@@ -16,7 +17,8 @@ namespace res {
 
 var idTmp = `
 {{define "expand"}}{{.VarName}}, // {{.Name}}
-{{end}}#ifndef PHX_RES_ID
+{{end}}`[1:] + `
+#ifndef PHX_RES_ID
 #define PHX_RES_ID
 
 namespace res {
@@ -27,17 +29,27 @@ namespace res {
 #endif
 `[1:]
 
-var mappingTmp = `
-#ifndef PHX_RES_ID
-#define PHX_RES_ID
+var mappingsTmp = `
+{{define "expand"}}
+	// res/{{.Name}}
+	{ ID::{{.VarName}},
+	  {
+	    .compressed_length   = std::extent<decltype({{.VarName}})>::value,
+	    .decompressed_length = {{.VarName}}_len,
+	    .content             = {{.VarName}},
+	  } },{{end}}`[1:] + `
+
+#include "id.hpp"
+#include "mapper.hpp"
 
 namespace res {
-    enum class ID {
-	{{range ids}}{{{end}}
-    };
-};
+    std::map<ID, const Mapper::resDefn> Mapper::mappings{`[2:] + `
 
-#endif
+{{range .}}{{template "expand" .}}
+{{end}}
+`[1:] + `
+    };
+}; // namespace res
 `[1:]
 
 var mapperTmp = `
