@@ -53,19 +53,21 @@ type Target struct {
 // Create creates a Resource which the static asset will be written to,
 // which uses a Compressor from the Target's pool.
 func (t Target) Create(name string) (io.WriteCloser, error) {
+
 	// Create a Resource to manage the creation of the asset and its
 	// variable declaration.  The project layout is created in
 	// Finalize() using the full Resource list.
 	res := &Resource{Name: name}
 
-	// Create the asset container.
-	assetF, err := t.FS.Create(t.FS.Join("res", name))
+	// Create the asset container (e.g. "dat_txt_real.cxx".)
+	assetF, err := t.FS.Create(t.FS.Join("res", res.VarName()+"_real.cxx"))
 	if err != nil {
 		return nil, errors.Wrapf(err, "creating asset %s", name)
 	}
 
-	// Create the variable declaration file for the resource.
-	declF, err := t.FS.Create(t.FS.Join("res", name+".cpp"))
+	// Create the variable declaration file for the resource (e.g.
+	// "dat_txt_decl.cxx".)
+	declF, err := t.FS.Create(t.FS.Join("res", res.VarName()+"_decl.cxx"))
 	if err != nil {
 		return nil, errors.Wrapf(err, "creating decl %s", name)
 	}
@@ -119,24 +121,27 @@ func (t Target) Finalize() error {
 		}
 	}()
 
-	// TODO:
-	// Additionally, the header and implementation files must be
-	// generated, other than the Resources-dependent ones.
+	// Create all the files which don't rely on variable state.
+	// They can be created while the resources are still being
+	// processed, but we'll wait at least until Finalize is called.
+	if err := CreateImplementations(t.FS); err != nil {
+		t.Wait()
+		close(t.done)
+		return errors.Wrap(err, "creating implementation files")
+	}
 
-	// err := CreateImplementations(t.FS)
-
+	// Wait for all Resource names to be processed so we can use
+	// them in the Mapper, etc.
 	t.Wait()
 	close(t.done)
 
-	// Have to wait for all Resource names to be processed.
 	sort.Sort(res)
 
 	// TODO: use templates from a subrepo / subfolder.
 	ccs := []Creator{
-		Names(res),
 		ID(res),
 		Mappings(res),
-		Mapper(res),
+		MapperHdr(res),
 	}
 
 	errs := make(chan error)
@@ -152,7 +157,9 @@ func (t Target) Finalize() error {
 	}
 
 	if ees == nil {
-		// A nil slice isn't a nil error interface.
+		// A nil slice isn't a nil interface.  If we return ees,
+		// the error interface will be non-nil, containing a nil
+		// slice as its implementation.
 		return nil
 	}
 	return ees

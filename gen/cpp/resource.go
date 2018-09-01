@@ -3,6 +3,7 @@ package cpp
 import (
 	"io"
 	"strings"
+	"text/template"
 
 	"github.com/pkg/errors"
 )
@@ -50,7 +51,12 @@ func (r *Resource) Close() (err error) {
 	if err = r.Into.Close(); err != nil {
 		return errors.Wrapf(err, "closing asset for %s", r.Name)
 	}
-	// Now write the declaration and close the output file.
+
+	if err := Decl(*r).Expand(r.Decl); err != nil {
+		return errors.Wrapf(err, "expanding declaration for %s", r.Name)
+	}
+
+	// Now close the declaration and output file.
 	return errors.Wrapf(r.Decl.Close(), "closing declaration for %s", r.Name)
 }
 
@@ -93,4 +99,18 @@ func (r Resources) Less(i, j int) bool {
 
 type ResourceManager struct {
 	Resources
+}
+
+type Decl Resource
+
+func (d Decl) Expand(r io.WriteCloser) error {
+	res := Resource(d)
+	name := "res/" + res.VarName() + "_decl.cxx"
+
+	tmp, err := template.New(name).Parse(templates[TmpDecl])
+	if err != nil {
+		return errors.Wrapf(err, "parsing %s template", name)
+	}
+
+	return errors.Wrapf(tmp.Execute(r, res), "executing %s", name)
 }

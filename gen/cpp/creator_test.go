@@ -134,3 +134,88 @@ namespace res {
 		t.FailNow()
 	}
 }
+
+func TestMapperCreator(t *testing.T) {
+	expect := `
+#ifndef PHX_RES_MAPPER
+#define PHX_RES_MAPPER
+
+#include <memory>
+#include <map>
+
+#include "id.hpp"
+#include "resource.hpp"
+
+namespace res {
+    // Mapper encapsulates implementation details of the mapping of IDs
+    // to Resources away from the user.
+    //
+    // Fetch is used to retrieve a new Resource, which can be used to
+    // decompress a static asset.  It does not create a new copy of the
+    // asset.
+    class Mapper {
+    public:
+	// Mapper may not be instantiated.
+	Mapper() = delete;
+
+	// Fetch creates and retrieves a unique smart-pointer to a
+	// Resource.
+	static std::unique_ptr<Resource> Fetch(ID) noexcept(false);
+
+    private:
+	struct resDefn {
+	    size_t               compressed_length;
+	    size_t               decompressed_length;
+	    const unsigned char* content;
+	};
+
+	static std::map<ID, const resDefn> mappings;
+
+	// Here, all names of assets are defined.  Each must have an ID
+	// associated with it.
+
+	// al.gif
+	static const size_t        al_gif_len;
+	static const unsigned char al_gif[];
+
+	// al.jpg
+	static const size_t        al_jpg_len;
+	static const unsigned char al_jpg[];
+
+	// bob.gif
+	static const size_t        bob_gif_len;
+	static const unsigned char bob_gif[];
+
+	// bob.jpg
+	static const size_t        bob_jpg_len;
+	static const unsigned char bob_jpg[];
+    };
+}; // namespace res
+
+#endif
+`[1:]
+
+	ff := mockFS{objs: make(map[string]bcl)}
+	ii := cpp.MapperHdr{
+		{Name: "al.gif"},
+		{Name: "al.jpg"},
+		{Name: "bob.gif"},
+		{Name: "bob.jpg"},
+	}
+
+	if err := ii.Create(ff); err != nil {
+		t.Errorf("expected nil error, got %#v", err)
+		t.FailNow()
+	}
+
+	t.Log("mock FS now contains mapper.hpp with the defined IDs")
+
+	if len(ff.objs) != 1 {
+		t.Errorf("unexpected objects in FS: %+v", ff.objs)
+	}
+	if fs := ff.objs["mapper.hpp"].String(); fs != expect {
+		t.Errorf("\n======== expected:\n%s\n\n"+
+			"======== got:\n%s", expect, fs)
+		t.FailNow()
+	}
+}
