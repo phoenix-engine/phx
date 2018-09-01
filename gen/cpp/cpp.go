@@ -22,6 +22,17 @@ const (
 	MaxWidth = 72
 )
 
+type CloserCloser struct {
+	first, second io.Closer
+}
+
+func (c CloserCloser) Close() error {
+	if err := c.first.Close(); err != nil {
+		return err
+	}
+	return c.second.Close()
+}
+
 func PrepareTarget(over fs.FS, using compress.Maker) Target {
 	return Target{
 		FS:        over,
@@ -76,7 +87,18 @@ func (t Target) Create(name string) (io.WriteCloser, error) {
 	comp := t.Get().(compress.Compressor)
 	aw := NewArrayWriter(assetF)
 	comp.Reset(aw)
-	res.Into, res.Decl = aw, declF
+
+	// The raw asset will be copied into "Into", which compresses
+	// and writes the compressed content into the ArrayWriter, which
+	// encodes the compressed bytes as a C++ array literal.
+	//
+	// The Compressor may also implement compress.Counter, counting
+	// the compressed bytes.
+	res.Into, res.Decl = comp, declF
+
+	// This takes care of flushing the compressor and array writer
+	// first, and then closing the underlying buffer or file.
+	res.CloserCloser = CloserCloser{first: res.Into, second: assetF}
 
 	done := make(chan struct{})
 	t.Add(1)

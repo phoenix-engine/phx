@@ -21,6 +21,7 @@ type Compressor interface {
 	Reset(to io.Writer)
 	Write([]byte) (int, error)
 	Flush() error
+	Close() error
 }
 
 // NoCompress is a noop Compressor.
@@ -29,8 +30,10 @@ type NoCompress struct{ io.Writer }
 // Reset implements Compressor on NoCompress.
 func (n *NoCompress) Reset(to io.Writer) { n.Writer = to }
 
-// Flush implements Compressor on NoCompress.
 func (NoCompress) Flush() error { return nil }
+
+// Flush implements Compressor on NoCompress.
+func (NoCompress) Close() error { return nil }
 
 // Level is a mapping for compression levels.  Each Compressor may have
 // its own way of mapping Level constants to internal values.  User-

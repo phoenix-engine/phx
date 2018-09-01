@@ -6,6 +6,7 @@ import (
 	"text/template"
 
 	"github.com/pkg/errors"
+	"github.com/synapse-garden/phx/gen/compress"
 )
 
 // Resource represents a static asset or resource generated from a file.
@@ -27,6 +28,10 @@ type Resource struct {
 	// Decl is the writer which will encode the variable declaration
 	// referring to the asset.
 	Into, Decl io.WriteCloser
+
+	// This handles closing the compressor / array writer first, and
+	// then the file underlying it.
+	CloserCloser
 }
 
 func (r *Resource) Write(some []byte) (n int, err error) {
@@ -47,8 +52,15 @@ func (r *Resource) ReadFrom(some io.Reader) (n int64, err error) {
 	return
 }
 
+func (r *Resource) Count() int64 {
+	if rc, ok := r.Into.(compress.Counter); ok {
+		return rc.Count()
+	}
+	return 0
+}
+
 func (r *Resource) Close() (err error) {
-	if err = r.Into.Close(); err != nil {
+	if err = r.CloserCloser.Close(); err != nil {
 		return errors.Wrapf(err, "closing asset for %s", r.Name)
 	}
 
@@ -56,7 +68,7 @@ func (r *Resource) Close() (err error) {
 		return errors.Wrapf(err, "expanding declaration for %s", r.Name)
 	}
 
-	// Now close the declaration and output file.
+	// Now close the declaration output file.
 	return errors.Wrapf(r.Decl.Close(), "closing declaration for %s", r.Name)
 }
 

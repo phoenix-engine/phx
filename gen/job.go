@@ -4,14 +4,15 @@ import (
 	"io"
 
 	"github.com/synapse-garden/phx/fs"
+	"github.com/synapse-garden/phx/gen/compress"
 
 	"github.com/pkg/errors"
 )
 
 type Job struct{ Name string }
 type Done struct {
-	Name string
-	Size int64
+	Name                 string
+	Size, CompressedSize int64
 }
 
 func MakeChans() (chan Job, chan Done, chan struct{}, chan error) {
@@ -93,5 +94,12 @@ func (w Work) Process(path string) (none Done, err error) {
 		return none, errors.Wrapf(err, "flushing compressor from %s", path)
 	}
 
-	return Done{Name: path, Size: n}, nil
+	done := Done{Name: path, Size: n}
+
+	// Check for a compression counter.
+	if c, ok := out.(compress.Counter); ok {
+		done.CompressedSize = c.Count()
+	}
+
+	return done, nil
 }

@@ -77,7 +77,15 @@ func (g Gen) Operate() error {
 			return err
 
 		case d := <-dones:
-			fmt.Fprintf(tw, "%s:\t%s\n", d.Name, renderSize(d.Size))
+			sizeStr := renderSize(d.Size)
+			if cs := d.CompressedSize; cs != 0 {
+				sizeStr += fmt.Sprintf(
+					" / %s compressed (%.2f%%)",
+					renderSize(cs),
+					100*(1-(float64(cs)/float64(d.Size))),
+				)
+			}
+			fmt.Fprintf(tw, "%s:\t%s\n", d.Name, sizeStr)
 		}
 	}
 
