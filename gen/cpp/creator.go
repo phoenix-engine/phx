@@ -98,8 +98,8 @@ func create(f fs.FS, name string, id TemplateID, rs Resources) error {
 func CreateImplementations(f fs.FS) error {
 	for fname, tmp := range map[string]TemplateID{
 		"mapper.cxx":    TmpMapperImpl,
-		"resource.cxx":  TmpResourceHdr,
-		"resource.hpp":  TmpResourceImpl,
+		"resource.hpp":  TmpResourceHdr,
+		"resource.cxx":  TmpResourceImpl,
 		".gitmodules":   TmpGitModules,
 		".gitignore":    TmpGitignore,
 		".clang-format": TmpClangFormat,
