@@ -118,7 +118,6 @@ namespace res {
 	// This will never fail as long as every ID has a mapping.
 	auto from = mappings[id];
 
-	// TODO: Decouple context creation from Mapper.
 	LZ4F_dctx* dec;
 	auto       lz4v = LZ4F_getVersion();
 	auto       err  = LZ4F_createDecompressionContext(&dec, lz4v);
@@ -176,8 +175,6 @@ namespace res {
           content(content) {}
 
     Resource::~Resource() noexcept(false) {
-	// TODO: Instead of throwing an exception, free the decoder in
-	// some other way, such as when consumed == length of content.
 	auto err = LZ4F_freeDecompressionContext(decoder);
 	if (LZ4F_isError(err)) {
 	    throw LZ4F_getErrorName(err);
@@ -224,7 +221,6 @@ namespace res {
 		throw LZ4F_getErrorName(errOrMore);
 	    }
 	    if (errOrMore == 0) {
-		// TODO: Maybe there's a better way to do this?
 		done = true;
 	    }
 
@@ -285,9 +281,6 @@ namespace res {
 
 	// BlockSize returns the maximum required size of a block which
 	// may be written to by a single partial Read.
-	//
-	// TODO: Make this a feature of a subclass or something so the
-	// streaming mode doesn't clutter the simple API.
 	const size_t BlockSize() noexcept(false);
 
 	// Read ingests up to len bytes into the target buffer.  For the
@@ -318,8 +311,9 @@ namespace res {
 `[1:]
 
 var cmakeTmp = `
+{{define "expand"}}  res/{{.VarName}}_decl.cxx{{end}}`[1:] + `
+
 cmake_minimum_required(VERSION 3.1.0 FATAL_ERROR)
-set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 # Add LZ4 and LZ4F definitions.
 add_subdirectory(lz4/lib)
@@ -328,26 +322,25 @@ add_subdirectory(lz4/lib)
 add_library(Resource STATIC
   mapper.cxx
   mappings.cxx
-  resource.cxx
-  res/dat_txt.cxx
+  resource.cxx`[2:] + `
+
+{{range .}}{{template "expand" .}}
+{{end}}`[1:] + `
+
 )
 
 target_include_directories(Resource PUBLIC
   ${CMAKE_CURRENT_LIST_DIR}
   ${LZ4F_INCLUDE_DIR}
 )
+
 target_link_libraries(Resource LZ4F)
 
 set_property(TARGET Resource PROPERTY CXX_STANDARD 11)
 set_property(TARGET Resource PROPERTY CXX_STANDARD_REQUIRED ON)
+`[2:]
 
-add_executable(ResTest main.cxx)
-target_link_libraries(ResTest Resource)
-
-set_property(TARGET ResTest PROPERTY CXX_STANDARD 11)
-set_property(TARGET ResTest PROPERTY CXX_STANDARD_REQUIRED ON)
-`[1:]
-
+// TODO: Fix me
 var gitModuleTmp = `
 [submodule "lz4"]
 	path = lz4

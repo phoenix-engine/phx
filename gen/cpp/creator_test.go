@@ -66,6 +66,60 @@ namespace res {
 	}
 }
 
+func TestCMakeCreator(t *testing.T) {
+	expect := `
+cmake_minimum_required(VERSION 3.1.0 FATAL_ERROR)
+
+# Add LZ4 and LZ4F definitions.
+add_subdirectory(lz4/lib)
+
+# Add Resource library.
+add_library(Resource STATIC
+  mapper.cxx
+  mappings.cxx
+  resource.cxx
+  res/al_gif_decl.cxx
+  res/al_jpg_decl.cxx
+  res/bob_gif_decl.cxx
+  res/bob_jpg_decl.cxx
+)
+
+target_include_directories(Resource PUBLIC
+  ${CMAKE_CURRENT_LIST_DIR}
+  ${LZ4F_INCLUDE_DIR}
+)
+
+target_link_libraries(Resource LZ4F)
+
+set_property(TARGET Resource PROPERTY CXX_STANDARD 11)
+set_property(TARGET Resource PROPERTY CXX_STANDARD_REQUIRED ON)
+`[1:]
+
+	ff := mockFS{objs: make(map[string]bcl)}
+	ii := cpp.CMakeLists{
+		{Name: "al.gif"},
+		{Name: "al.jpg"},
+		{Name: "bob.gif"},
+		{Name: "bob.jpg"},
+	}
+
+	if err := ii.Create(ff); err != nil {
+		t.Errorf("expected nil error, got %#v", err)
+		t.FailNow()
+	}
+
+	t.Log("mock FS now contains CMakeLists.txt with the defined IDs")
+
+	if len(ff.objs) != 1 {
+		t.Errorf("unexpected objects in FS: %+v", ff.objs)
+	}
+	if fs := ff.objs["CMakeLists.txt"].String(); fs != expect {
+		t.Errorf("\n======== expected:\n%s\n\n"+
+			"======== got:\n%s", expect, fs)
+		t.FailNow()
+	}
+}
+
 func TestMappingsCreator(t *testing.T) {
 	expect := `
 #include "id.hpp"

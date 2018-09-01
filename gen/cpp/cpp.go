@@ -164,6 +164,7 @@ func (t Target) Finalize() error {
 		ID(res),
 		Mappings(res),
 		MapperHdr(res),
+		CMakeLists(res),
 	}
 
 	errs := make(chan error)

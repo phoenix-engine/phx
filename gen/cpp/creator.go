@@ -78,6 +78,12 @@ func (m MapperHdr) Create(f fs.FS) error {
 	return create(f, "mapper.hpp", TmpMapperHdr, Resources(m))
 }
 
+type CMakeLists Resources
+
+func (c CMakeLists) Create(f fs.FS) error {
+	return create(f, "CMakeLists.txt", TmpCMakeLists, Resources(c))
+}
+
 func create(f fs.FS, name string, id TemplateID, rs Resources) error {
 	tmp, err := template.New(name).Parse(templates[id])
 	if err != nil {
@@ -91,13 +97,12 @@ func create(f fs.FS, name string, id TemplateID, rs Resources) error {
 // state.
 func CreateImplementations(f fs.FS) error {
 	for fname, tmp := range map[string]TemplateID{
-		"mapper.cxx":     TmpMapperImpl,
-		"resource.cxx":   TmpResourceHdr,
-		"resource.hpp":   TmpResourceImpl,
-		"CMakeLists.txt": TmpCMakeLists,
-		".gitmodules":    TmpGitModules,
-		".gitignore":     TmpGitignore,
-		".clang-format":  TmpClangFormat,
+		"mapper.cxx":    TmpMapperImpl,
+		"resource.cxx":  TmpResourceHdr,
+		"resource.hpp":  TmpResourceImpl,
+		".gitmodules":   TmpGitModules,
+		".gitignore":    TmpGitignore,
+		".clang-format": TmpClangFormat,
 	} {
 		ff, err := f.Create(fname)
 		if err != nil {
