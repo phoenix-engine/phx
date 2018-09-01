@@ -45,8 +45,7 @@ namespace res {
     std::map<ID, const Mapper::resDefn> Mapper::mappings{`[2:] + `
 
 {{range .}}{{template "expand" .}}
-{{end}}
-`[1:] + `
+{{end}}`[1:] + `
     };
 }; // namespace res
 `[1:]

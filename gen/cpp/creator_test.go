@@ -159,7 +159,6 @@ namespace res {
 	    .decompressed_length = bob_jpg_len,
 	    .content             = bob_jpg,
 	  } },
-
     };
 }; // namespace res
 `[1:]
