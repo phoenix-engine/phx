@@ -2,7 +2,9 @@ package gen
 
 import (
 	"fmt"
+	"os"
 	"runtime"
+	"text/tabwriter"
 
 	"github.com/synapse-garden/phx/fs"
 	"github.com/synapse-garden/phx/gen/compress"
@@ -17,6 +19,8 @@ import (
 type Gen struct {
 	From, To fs.FS
 	compress.Level
+
+	// TODO: Verbosity
 }
 
 // Operate processes files as in the description of the type.
@@ -63,6 +67,9 @@ func (g Gen) Operate() error {
 		close(jobs)
 	}()
 
+	tw := new(tabwriter.Writer)
+	tw.Init(os.Stdout, 0, 8, 0, '\t', 0)
+
 	for i := 0; i < len(fis); i++ {
 		select {
 		case err := <-errs:
@@ -70,9 +77,11 @@ func (g Gen) Operate() error {
 			return err
 
 		case d := <-dones:
-			fmt.Printf("%s: %d\n", d.Name, d.Size)
+			fmt.Fprintf(tw, "%s:\t%s\n", d.Name, renderSize(d.Size))
 		}
 	}
+
+	tw.Flush()
 
 	if err := encoder.Finalize(); err != nil {
 		// Do any last synchronous cleanup the Encoder requires.
@@ -82,13 +91,12 @@ func (g Gen) Operate() error {
 	// All finished tmpfiles are now in the tmp destination and
 	// shall be moved over to the target.
 
-	// TODO: Make this concurrent?
-	// TODO: Range over filesystem instead?
 	tmpFis, err := tmpFS.ReadDir("")
 	if err != nil {
 		return errors.Wrap(err, "reading tempdir")
 	}
 
+	// TODO: Make this concurrent.
 	for _, fi := range tmpFis {
 		name := fi.Name()
 		if err := fs.Move(tmpFS, g.To, name, name); err != nil {
@@ -96,5 +104,27 @@ func (g Gen) Operate() error {
 		}
 	}
 
+	// TODO: If we used a real tmpdir, remove it now.
+
 	return nil
+}
+
+// Size constants.
+const (
+	KB = 2 << 9
+	MB = 2 << 19
+	GB = 2 << 29
+)
+
+func renderSize(byteLen int64) string {
+	switch {
+	case byteLen < KB:
+		return fmt.Sprintf("%d B", byteLen)
+	case byteLen < MB:
+		return fmt.Sprintf("%.2f KB", float64(byteLen)/KB)
+	case byteLen < GB:
+		return fmt.Sprintf("%.2f MB", float64(byteLen)/MB)
+	default:
+		return fmt.Sprintf("%.2f GB", float64(byteLen)/GB)
+	}
 }
