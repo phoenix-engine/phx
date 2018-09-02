@@ -131,7 +131,7 @@ namespace res {
 	// res/al.gif
 	{ ID::al_gif,
 	  {
-	    .compressed_length   = std::extent<decltype(al_gif)>::value,
+	    .compressed_length   = 100, // std::extent<decltype(al_gif)>::value,
 	    .decompressed_length = al_gif_len,
 	    .content             = al_gif,
 	  } },
@@ -139,7 +139,7 @@ namespace res {
 	// res/al.jpg
 	{ ID::al_jpg,
 	  {
-	    .compressed_length   = std::extent<decltype(al_jpg)>::value,
+	    .compressed_length   = 200, // std::extent<decltype(al_jpg)>::value,
 	    .decompressed_length = al_jpg_len,
 	    .content             = al_jpg,
 	  } },
@@ -147,7 +147,7 @@ namespace res {
 	// res/bob.gif
 	{ ID::bob_gif,
 	  {
-	    .compressed_length   = std::extent<decltype(bob_gif)>::value,
+	    .compressed_length   = 300, // std::extent<decltype(bob_gif)>::value,
 	    .decompressed_length = bob_gif_len,
 	    .content             = bob_gif,
 	  } },
@@ -155,7 +155,7 @@ namespace res {
 	// res/bob.jpg
 	{ ID::bob_jpg,
 	  {
-	    .compressed_length   = std::extent<decltype(bob_jpg)>::value,
+	    .compressed_length   = 400, // std::extent<decltype(bob_jpg)>::value,
 	    .decompressed_length = bob_jpg_len,
 	    .content             = bob_jpg,
 	  } },
@@ -165,10 +165,10 @@ namespace res {
 
 	ff := mockFS{objs: make(map[string]bcl)}
 	ii := cpp.Mappings{
-		{Name: "al.gif"},
-		{Name: "al.jpg"},
-		{Name: "bob.gif"},
-		{Name: "bob.jpg"},
+		{Name: "al.gif", CompCount: 100},
+		{Name: "al.jpg", CompCount: 200},
+		{Name: "bob.gif", CompCount: 300},
+		{Name: "bob.jpg", CompCount: 400},
 	}
 
 	if err := ii.Create(ff); err != nil {

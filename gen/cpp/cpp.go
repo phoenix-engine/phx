@@ -111,6 +111,9 @@ func (t Target) Create(name string) (io.WriteCloser, error) {
 		comp.Reset(nil)
 		t.Put(comp)
 
+		// Get rid of the "Into" handle, since it was pointing
+		// at that recycled resource.
+
 		// t.done is unbuffered, so every Resource will have a
 		// waiting channel send after it's finished encoding.
 		// These will be consumed in Finalize().

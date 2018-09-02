@@ -29,6 +29,10 @@ type Resource struct {
 	// referring to the asset.
 	Into, Decl io.WriteCloser
 
+	// CompCount is set in the Close method if the underlying "Into"
+	// implements compress.Counter.
+	CompCount int64
+
 	// This handles closing the compressor / array writer first, and
 	// then the file underlying it.
 	CloserCloser
@@ -53,10 +57,7 @@ func (r *Resource) ReadFrom(some io.Reader) (n int64, err error) {
 }
 
 func (r *Resource) Count() int64 {
-	if rc, ok := r.Into.(compress.Counter); ok {
-		return rc.Count()
-	}
-	return 0
+	return r.CompCount
 }
 
 func (r *Resource) Close() (err error) {
@@ -66,6 +67,12 @@ func (r *Resource) Close() (err error) {
 
 	if err := AssetDecl(*r).Expand(r.Decl); err != nil {
 		return errors.Wrapf(err, "expanding declaration for %s", r.Name)
+	}
+
+	// Set the compressed count, if the target implements it.
+	// TODO: Use fixed decltype instead.
+	if cc, ok := r.Into.(compress.Counter); ok {
+		r.CompCount = cc.Count()
 	}
 
 	// Now close the declaration output file.

@@ -3,8 +3,16 @@ package cpp_test
 import (
 	"bytes"
 	"fmt"
+	"io"
 	"unicode"
 )
+
+type mockCounter struct {
+	int64
+	io.WriteCloser
+}
+
+func (m mockCounter) Count() int64 { return m.int64 }
 
 func makeLongBuffer() *bytes.Buffer {
 	out := make([]byte, 80)

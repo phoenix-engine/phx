@@ -28,12 +28,13 @@ namespace res {
 #endif
 `[1:]
 
+// TODO: Fix decltype
 var mappingsTmp = `
 {{define "expand"}}
 	// res/{{.Name}}
 	{ ID::{{.VarName}},
 	  {
-	    .compressed_length   = std::extent<decltype({{.VarName}})>::value,
+	    .compressed_length   = {{.Count}}, // std::extent<decltype({{.VarName}})>::value,
 	    .decompressed_length = {{.VarName}}_len,
 	    .content             = {{.VarName}},
 	  } },{{end}}`[1:] + `
@@ -125,9 +126,9 @@ namespace res {
 	    throw LZ4F_getErrorName(err);
 	}
 
-	return std::move(std::unique_ptr<Resource>(
+	return std::unique_ptr<Resource>(
 	  new Resource(dec, from.content, from.compressed_length,
-	               from.decompressed_length)));
+	               from.decompressed_length));
     };
 }; // namespace res
 `[1:]
