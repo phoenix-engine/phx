@@ -21,7 +21,7 @@ namespace res {
 
 	buf := bcl{new(bytes.Buffer)}
 
-	err := cpp.Decl(cpp.Resource{Name: "foo.txt", Size: 1000}).Expand(buf)
+	err := cpp.AssetDecl(cpp.Resource{Name: "foo.txt", Size: 1000}).Expand(buf)
 
 	if err != nil {
 		t.Errorf("expected nil error, but got %#v", err)

@@ -3,9 +3,10 @@ package compress_test
 import (
 	"compress/gzip"
 
+	"github.com/synapse-garden/phx/gen/compress"
+
 	"github.com/golang/snappy"
 	"github.com/pierrec/lz4"
-	"github.com/synapse-garden/phx/gen/compress"
 )
 
 var _ compress.Compressor = new(compress.NoCompress)

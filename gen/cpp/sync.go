@@ -11,6 +11,13 @@ type DoneCloser struct {
 	done chan<- struct{}
 }
 
+func (d DoneCloser) ReadFrom(r io.Reader) (int64, error) {
+	if rf, ok := d.WriteCloser.(io.ReaderFrom); ok {
+		return rf.ReadFrom(r)
+	}
+	return io.Copy(d.WriteCloser, r)
+}
+
 func (d DoneCloser) Close() error {
 	defer close(d.done)
 	return d.WriteCloser.Close()

@@ -64,7 +64,7 @@ func (r *Resource) Close() (err error) {
 		return errors.Wrapf(err, "closing asset for %s", r.Name)
 	}
 
-	if err := Decl(*r).Expand(r.Decl); err != nil {
+	if err := AssetDecl(*r).Expand(r.Decl); err != nil {
 		return errors.Wrapf(err, "expanding declaration for %s", r.Name)
 	}
 
@@ -113,10 +113,10 @@ type ResourceManager struct {
 	Resources
 }
 
-type Decl Resource
+type AssetDecl Resource
 
-func (d Decl) Expand(r io.WriteCloser) error {
-	res := Resource(d)
+func (a AssetDecl) Expand(r io.WriteCloser) error {
+	res := Resource(a)
 	name := "res/" + res.VarName() + "_decl.cxx"
 
 	tmp, err := template.New(name).Parse(templates[TmpDecl])
