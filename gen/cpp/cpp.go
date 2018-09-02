@@ -94,7 +94,17 @@ func (t Target) Create(name string) (io.WriteCloser, error) {
 
 	// This takes care of flushing the compressor and array writer
 	// first, and then closing the underlying buffer or file.
-	res.CloserCloser = CloserCloser{first: res.Into, second: assetF}
+	res.CloserCloser = CloserCloser{
+		// First, close the compressor, then the array writer.
+		first: CloserCloser{
+			// First, close the compressor.
+			first: res.Into,
+			// Then, close the arraywriter.
+			second: aw,
+		},
+		// Then, close the output asset file.
+		second: assetF,
+	}
 
 	done := make(chan struct{})
 	t.Add(1)
