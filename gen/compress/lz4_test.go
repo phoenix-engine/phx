@@ -6,7 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/synapse-garden/phx/gen/compress"
+	"github.com/phoenix-engine/phx/gen/compress"
 
 	"github.com/pierrec/lz4"
 )

@@ -5,8 +5,9 @@ import (
 	"strings"
 	"text/template"
 
+	"github.com/phoenix-engine/phx/gen/compress"
+
 	"github.com/pkg/errors"
-	"github.com/synapse-garden/phx/gen/compress"
 )
 
 // Resource represents a static asset or resource generated from a file.

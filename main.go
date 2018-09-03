@@ -15,7 +15,7 @@
 
 package main
 
-import "github.com/synapse-garden/phx/cmd"
+import "github.com/phoenix-engine/phx/cmd"
 
 func main() {
 	cmd.Execute()

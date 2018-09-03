@@ -5,8 +5,8 @@ import (
 	"io"
 	"testing"
 
-	"github.com/synapse-garden/phx/gen/cpp"
-	pt "github.com/synapse-garden/phx/testing"
+	"github.com/phoenix-engine/phx/gen/cpp"
+	pt "github.com/phoenix-engine/phx/testing"
 )
 
 func TestArrayWriter(t *testing.T) {

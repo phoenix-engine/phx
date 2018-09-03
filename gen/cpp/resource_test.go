@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"testing"
 
-	"github.com/synapse-garden/phx/gen/cpp"
+	"github.com/phoenix-engine/phx/gen/cpp"
 )
 
 func TestDeclExpand(t *testing.T) {

@@ -3,8 +3,8 @@ package gen
 import (
 	"io"
 
-	"github.com/synapse-garden/phx/fs"
-	"github.com/synapse-garden/phx/gen/compress"
+	"github.com/phoenix-engine/phx/fs"
+	"github.com/phoenix-engine/phx/gen/compress"
 
 	"github.com/pkg/errors"
 )

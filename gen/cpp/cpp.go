@@ -7,9 +7,10 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/phoenix-engine/phx/fs"
+	"github.com/phoenix-engine/phx/gen/compress"
+
 	"github.com/pkg/errors"
-	"github.com/synapse-garden/phx/fs"
-	"github.com/synapse-garden/phx/gen/compress"
 )
 
 // Size constants.

@@ -16,9 +16,9 @@
 package cmd
 
 import (
-	"github.com/synapse-garden/phx/fs"
-	"github.com/synapse-garden/phx/gen"
-	"github.com/synapse-garden/phx/gen/compress"
+	"github.com/phoenix-engine/phx/fs"
+	"github.com/phoenix-engine/phx/gen"
+	"github.com/phoenix-engine/phx/gen/compress"
 
 	"github.com/spf13/cobra"
 )

@@ -5,7 +5,7 @@ import (
 	"io"
 	"text/template"
 
-	"github.com/synapse-garden/phx/fs"
+	"github.com/phoenix-engine/phx/fs"
 
 	"github.com/pkg/errors"
 )

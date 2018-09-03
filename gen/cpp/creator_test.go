@@ -5,8 +5,8 @@ import (
 	"io"
 	"testing"
 
-	"github.com/synapse-garden/phx/fs"
-	"github.com/synapse-garden/phx/gen/cpp"
+	"github.com/phoenix-engine/phx/fs"
+	"github.com/phoenix-engine/phx/gen/cpp"
 )
 
 type bcl struct{ *bytes.Buffer }

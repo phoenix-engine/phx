@@ -3,8 +3,8 @@ package cpp_test
 import (
 	"io"
 
-	"github.com/synapse-garden/phx/gen"
-	"github.com/synapse-garden/phx/gen/cpp"
+	"github.com/phoenix-engine/phx/gen"
+	"github.com/phoenix-engine/phx/gen/cpp"
 )
 
 var (

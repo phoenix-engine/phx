@@ -1,7 +1,7 @@
 package fs_test
 
 import (
-	"github.com/synapse-garden/phx/fs"
+	"github.com/phoenix-engine/phx/fs"
 )
 
 var _ = fs.FS(fs.Real{})

@@ -6,9 +6,9 @@ import (
 	"runtime"
 	"text/tabwriter"
 
-	"github.com/synapse-garden/phx/fs"
-	"github.com/synapse-garden/phx/gen/compress"
-	"github.com/synapse-garden/phx/gen/cpp"
+	"github.com/phoenix-engine/phx/fs"
+	"github.com/phoenix-engine/phx/gen/compress"
+	"github.com/phoenix-engine/phx/gen/cpp"
 
 	"github.com/pkg/errors"
 )
@@ -47,6 +47,8 @@ func (g Gen) Operate() error {
 
 	for i := 0; i < runtime.NumCPU(); i++ {
 		// TODO: Use real tmpdir for very large resources.
+		// TODO: Figure out how to manage large / complicated
+		// deps, such as git repos
 		go Work{
 			from:    g.From,
 			Jobs:    jobs,

@@ -3,7 +3,7 @@ package cpp
 import (
 	"io"
 
-	"github.com/synapse-garden/phx/gen/compress"
+	"github.com/phoenix-engine/phx/gen/compress"
 )
 
 type DoneCloser struct {
