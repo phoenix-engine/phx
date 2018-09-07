@@ -20,8 +20,9 @@ type GitModule struct {
 	// Remote specifies the full path to the remote, including e.g.
 	// protocol.  Local is the local name that the repo will be
 	// cloned into.  Revision (optional) defines a specific revision
-	// to be checked out, such as a tag, commit id, or branch.
-	Remote, Local, Revision string
+	// to be checked out, such as a tag, commit id, or branch.  If
+	// Branch is set, it will be used in git submodule commands.
+	Remote, Local, Branch, Revision string
 }
 
 func runOut(w io.Writer, command string, args ...interface{}) (bool, error) {
@@ -62,7 +63,7 @@ func (g GitModule) Operate(root string) error {
 	outpath := filepath.Join(root, g.Local)
 
 	// Are we in a git repo?
-	if is, err := run("git rev-parse --is-inside-work-tree"); err != nil {
+	if is, err := runOut(nil, "git rev-parse --is-inside-work-tree"); err != nil {
 		return errors.Wrap(err, "creating git status check")
 	} else if !is {
 		// No.  Clone the repo into the target root.
@@ -85,10 +86,18 @@ func (g GitModule) Operate(root string) error {
 		return errors.Wrapf(err, "checking git submodule %s", outpath)
 	} else if isSubm {
 		// Yes, check whether its state matches expected.
+		return nil
 	}
 
 	// No, add it as a submodule.
-	ok, err := run("git submodule add %s %s", g.Remote, outpath)
+
+	// If it has a branch set, use that branch.
+	var b string
+	if gb := g.Branch; gb != "" {
+		b = "-b " + gb + " "
+	}
+
+	ok, err := run("git submodule add %s%s %s", b, g.Remote, outpath)
 	if err != nil {
 		msg := "adding submodule %s from %s"
 		return errors.Wrapf(err, msg, outpath, g.Remote)
