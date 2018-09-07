@@ -62,7 +62,7 @@ var genCmd = &cobra.Command{
 		}
 
 		mod := gen.GitModule{
-			Remote: "git@github.com:synapse-garden/lz4.git",
+			Remote: "git@github.com:phoenix-engine/lz4.git",
 			Local:  "lz4",
 		}
 
