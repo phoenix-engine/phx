@@ -31,7 +31,15 @@ func runOut(w io.Writer, command string, args ...interface{}) (bool, error) {
 	proc.Stdout = w
 
 	err := errors.Wrapf(proc.Run(), "running %v", cc)
-	return proc.ProcessState.Success(), err
+	success := proc.ProcessState.Success()
+
+	switch errors.Cause(err).(type) {
+	case nil:
+	case *exec.ExitError:
+	default:
+		return success, err
+	}
+	return success, nil
 }
 
 func run(command string, args ...interface{}) (bool, error) {
