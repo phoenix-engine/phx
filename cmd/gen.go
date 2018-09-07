@@ -64,6 +64,7 @@ var genCmd = &cobra.Command{
 		mod := gen.GitModule{
 			Remote: "git@github.com:phoenix-engine/lz4.git",
 			Local:  "lz4",
+			Branch: "master",
 		}
 
 		return errors.Wrap(mod.Operate(*to), "operating git module")
