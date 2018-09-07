@@ -27,7 +27,7 @@ type GitModule struct {
 func runOut(w io.Writer, command string, args ...interface{}) (bool, error) {
 	cc := fmt.Sprintf(command, args...)
 	elements := strings.Fields(cc)
-	proc := exec.Command(elements[0])
+	proc := exec.Command(elements[0], elements[1:]...)
 	proc.Stdout = w
 
 	err := errors.Wrapf(proc.Run(), "running %v", cc)
