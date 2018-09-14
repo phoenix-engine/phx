@@ -80,10 +80,14 @@ func init() {
 		"gen",
 		"Where to write generated resources",
 	)
-	genCmd.PersistentFlags().IntVarP(
-		level, "level", "l",
-		0,
-		"The compression level to use (0, 1, 2, 3, 9) "+
-			"NOTE: > 0 unsupported due to bug",
-	)
+
+	// TODO: Enable once LZ4 bug fixed:
+	// https://github.com/pierrec/lz4/issues/29
+
+	// genCmd.PersistentFlags().IntVarP(
+	// 	level, "level", "l",
+	// 	0,
+	// 	"The compression level to use (0, 1, 2, 3, 9) "+
+	// 		"NOTE: > 0 unsupported due to bug",
+	// )
 }
