@@ -36,7 +36,8 @@ to quickly create a Cobra application.`,
 }
 
 func init() {
-	genCmd.AddCommand(staticCmd)
+	// TODO: Enable.
+	// genCmd.AddCommand(staticCmd)
 
 	// Here you will define your flags and configuration settings.
 
