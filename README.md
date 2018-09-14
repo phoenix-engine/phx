@@ -7,13 +7,6 @@ The Phoenix Engine toolkit
 $ go get github.com/phoenix-engine/phx
 ```
 
-> Install latest stable version
-
-```sh
-# TODO
-$ curl -L curl https://phx.github.io -sSf | sh
-```
-
 ```sh
 $ phx help
 ```
