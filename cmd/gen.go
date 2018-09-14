@@ -61,13 +61,9 @@ var genCmd = &cobra.Command{
 			return errors.Wrap(err, "operating gen pipeline")
 		}
 
-		mod := gen.GitModule{
-			Remote: "git@github.com:phoenix-engine/lz4.git",
-			Local:  "lz4",
-			Branch: "master",
-		}
+		// TODO: Trigger dep update
 
-		return errors.Wrap(mod.Operate(*to), "operating git module")
+		return nil
 	},
 }
 
