@@ -40,7 +40,8 @@ func (NoCompress) Close() error { return nil }
 // facing code should select a Level from among the defined constants.
 type Level int
 
-// Level constants.
+// Level constants.  To maintain backwards compatibility, new constants
+// must be added at the end of the list.
 const (
 	Fastest Level = iota
 	Medium
