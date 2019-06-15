@@ -115,7 +115,6 @@ func (g Gen) Operate() error {
 	}
 
 	// TODO: If we used a real tmpdir, remove it now.
-
 	return nil
 }
 

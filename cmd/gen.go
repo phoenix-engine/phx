@@ -20,6 +20,7 @@ import (
 	"github.com/phoenix-engine/phx/gen"
 	"github.com/phoenix-engine/phx/gen/compress"
 
+	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 )
 
@@ -36,9 +37,9 @@ var genCmd = &cobra.Command{
 	Short: "Generate build deps",
 	Long:  ``,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		return gen.Gen{
-			From:  fs.Real{*from},
-			To:    fs.Real{*to},
+		pipeline := gen.Gen{
+			From:  fs.Real{Where: *from},
+			To:    fs.Real{Where: *to},
 			Level: compress.Fastest,
 			// func() gen.Level {
 			// switch *level {
@@ -54,7 +55,18 @@ var genCmd = &cobra.Command{
 			// 	return gen.Medium
 			// }
 			// }(),
-		}.Operate()
+		}
+
+		if err := pipeline.Operate(); err != nil {
+			return errors.Wrap(err, "operating gen pipeline")
+		}
+
+		mod := gen.GitModule{
+			Remote: "git@github.com:synapse-garden/lz4.git",
+			Local:  "lz4",
+		}
+
+		return errors.Wrap(mod.Operate(*to), "operating git module")
 	},
 }
 
