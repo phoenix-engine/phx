@@ -23,7 +23,6 @@ const (
 	TmpResourceImpl
 
 	TmpCMakeLists
-	TmpGitModules
 	TmpGitignore
 	TmpClangFormat
 )
@@ -38,7 +37,6 @@ var templates = map[TemplateID]string{
 	TmpResourceImpl: resourceImplTmp,
 
 	TmpCMakeLists:  cmakeTmp,
-	TmpGitModules:  gitModuleTmp,
 	TmpGitignore:   gitignoreTmp,
 	TmpClangFormat: clangFormatTmp,
 }
@@ -100,7 +98,6 @@ func CreateImplementations(f fs.FS) error {
 		"mapper.cxx":    TmpMapperImpl,
 		"resource.hpp":  TmpResourceHdr,
 		"resource.cxx":  TmpResourceImpl,
-		".gitmodules":   TmpGitModules,
 		".gitignore":    TmpGitignore,
 		".clang-format": TmpClangFormat,
 	} {

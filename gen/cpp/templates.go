@@ -338,13 +338,6 @@ set_property(TARGET Resource PROPERTY CXX_STANDARD 11)
 set_property(TARGET Resource PROPERTY CXX_STANDARD_REQUIRED ON)
 `[2:]
 
-// TODO: Fix me
-var gitModuleTmp = `
-[submodule "lz4"]
-	path = lz4
-	url = git@github.com:synapse-garden/lz4.git
-`[1:]
-
 var gitignoreTmp = `
 cmake_install.cmake
 CMakeCache.txt
