@@ -128,37 +128,29 @@ func TestMappingsCreator(t *testing.T) {
 namespace res {
     std::map<ID, const Mapper::resDefn> Mapper::mappings{
 
-	// res/al.gif
-	{ ID::al_gif,
-	  {
-	    .compressed_length   = 100, // std::extent<decltype(al_gif)>::value,
-	    .decompressed_length = al_gif_len,
-	    .content             = al_gif,
-	  } },
+	// al.gif
+	{
+		ID::al_gif,
+		{ 100, al_gif_len, al_gif },
+	},
 
-	// res/al.jpg
-	{ ID::al_jpg,
-	  {
-	    .compressed_length   = 200, // std::extent<decltype(al_jpg)>::value,
-	    .decompressed_length = al_jpg_len,
-	    .content             = al_jpg,
-	  } },
+	// al.jpg
+	{
+		ID::al_jpg,
+		{ 200, al_jpg_len, al_gif },
+	},
 
-	// res/bob.gif
-	{ ID::bob_gif,
-	  {
-	    .compressed_length   = 300, // std::extent<decltype(bob_gif)>::value,
-	    .decompressed_length = bob_gif_len,
-	    .content             = bob_gif,
-	  } },
+	// bob.gif
+	{
+		ID::bob_gif,
+		{ 300, bob_gif_len, bob_gif },
+	},
 
-	// res/bob.jpg
-	{ ID::bob_jpg,
-	  {
-	    .compressed_length   = 400, // std::extent<decltype(bob_jpg)>::value,
-	    .decompressed_length = bob_jpg_len,
-	    .content             = bob_jpg,
-	  } },
+	// bob.jpg
+	{
+		ID::bob_jpg,
+		{ 400, bob_jpg_len, bob_jpg },
+	},
     };
 }; // namespace res
 `[1:]

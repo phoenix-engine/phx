@@ -31,13 +31,11 @@ namespace res {
 // TODO: Fix decltype
 var mappingsTmp = `
 {{define "expand"}}
-	// res/{{.Name}}
-	{ ID::{{.VarName}},
-	  {
-	    .compressed_length   = {{.Count}}, // std::extent<decltype({{.VarName}})>::value,
-	    .decompressed_length = {{.VarName}}_len,
-	    .content             = {{.VarName}},
-	  } },{{end}}`[1:] + `
+	// {{.Name}}
+	{
+		ID::{{.VarName}},
+		{ {{.Count}}, {{.VarName}}_len, {{.VarName}} },
+	},{{end}}`[1:] + `
 
 #include "id.hpp"
 #include "mapper.hpp"
@@ -161,7 +159,7 @@ namespace res {
 	}
     }; // namespace
 
-    size_t Resource::Len() noexcept(true) {
+    const size_t Resource::Len() noexcept(true) {
 	return decompressed_content_length;
     }
 
@@ -277,7 +275,7 @@ namespace res {
 	~Resource() noexcept(false);
 
 	// Len returns the full decompressed size of the asset.
-	size_t Len() noexcept(true);
+	const size_t Len() noexcept(true);
 
 	// BlockSize returns the maximum required size of a block which
 	// may be written to by a single partial Read.
