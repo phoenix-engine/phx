@@ -38,23 +38,22 @@ var genCmd = &cobra.Command{
 	Long:  ``,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		pipeline := gen.Gen{
-			From:  fs.Real{Where: *from},
-			To:    fs.Real{Where: *to},
-			Level: compress.Fastest,
-			// func() gen.Level {
-			// switch *level {
-			// case 0:
-			// 	return gen.Fastest
-			// case 1:
-			// 	return gen.Medium
-			// case 2, 3:
-			// 	return gen.High
-			// case 9:
-			// 	return gen.LZ4HC
-			// default:
-			// 	return gen.Medium
-			// }
-			// }(),
+			From: fs.Real{Where: *from},
+			To:   fs.Real{Where: *to},
+			Level: func() compress.Level {
+				switch *level {
+				case 0:
+					return compress.Fastest
+				case 1:
+					return compress.Medium
+				case 2, 3:
+					return compress.High
+				case 9:
+					return compress.LZ4HC
+				default:
+					return compress.Medium
+				}
+			}(),
 		}
 
 		if err := pipeline.Operate(); err != nil {
@@ -81,13 +80,9 @@ func init() {
 		"Where to write generated resources",
 	)
 
-	// TODO: Enable once LZ4 bug fixed:
-	// https://github.com/pierrec/lz4/issues/29
-
-	// genCmd.PersistentFlags().IntVarP(
-	// 	level, "level", "l",
-	// 	0,
-	// 	"The compression level to use (0, 1, 2, 3, 9) "+
-	// 		"NOTE: > 0 unsupported due to bug",
-	// )
+	genCmd.PersistentFlags().IntVarP(
+		level, "level", "l",
+		0,
+		"The compression level to use (0, 1, 2, 3, 9)",
+	)
 }
