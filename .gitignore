@@ -5,6 +5,7 @@ phx
 *~
 \#*
 .#*
+.vscode
 
 # Binaries for programs and plugins
 *.exe
