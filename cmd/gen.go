@@ -19,6 +19,7 @@ import (
 	"github.com/phoenix-engine/phx/fs"
 	"github.com/phoenix-engine/phx/gen"
 	"github.com/phoenix-engine/phx/gen/compress"
+	"github.com/phoenix-engine/phx/path"
 
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
@@ -27,6 +28,8 @@ import (
 var (
 	from = new(string)
 	to   = new(string)
+
+	match Regexp
 
 	level = new(int)
 )
@@ -40,6 +43,14 @@ var genCmd = &cobra.Command{
 		pipeline := gen.Gen{
 			From: fs.Real{Where: *from},
 			To:   fs.Real{Where: *to},
+
+			Matcher: func() path.Matcher {
+				if match.Regexp == nil {
+					return MatchAny{}
+				}
+				return match
+			}(),
+
 			Level: func() compress.Level {
 				switch *level {
 				case 0:
@@ -68,6 +79,10 @@ var genCmd = &cobra.Command{
 
 func init() {
 	rootCmd.AddCommand(genCmd)
+
+	genCmd.PersistentFlags().Var(
+		&match, "match", "",
+	)
 
 	genCmd.PersistentFlags().StringVar(
 		from, "from",

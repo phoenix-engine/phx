@@ -137,7 +137,7 @@ namespace res {
 	// al.jpg
 	{
 		ID::al_jpg,
-		{ 200, al_jpg_len, al_gif },
+		{ 200, al_jpg_len, al_jpg },
 	},
 
 	// bob.gif
@@ -174,8 +174,28 @@ namespace res {
 		t.Errorf("unexpected objects in FS: %+v", ff.objs)
 	}
 	if fs := ff.objs["mappings.cxx"].String(); fs != expect {
-		t.Errorf("\n======== expected:\n%s\n\n"+
+		t.Errorf("\n======== expected:\n%s"+
 			"======== got:\n%s", expect, fs)
+
+		var line string
+		linenum := 1
+
+		for i := range expect {
+			if expect[i] != fs[i] {
+				t.Logf("fs[%d](%#q) didn't match expect[%d](%#q).",
+					i, fs[i], i, expect[i],
+				)
+				t.Logf("fs line %d: %#q...", linenum, line)
+				break
+			}
+
+			if fs[i] == '\n' {
+				linenum++
+				line = ""
+			} else {
+				line += string(fs[i])
+			}
+		}
 		t.FailNow()
 	}
 }
