@@ -86,7 +86,6 @@ add_library(Resource STATIC
 
 target_include_directories(Resource PUBLIC
   ${CMAKE_CURRENT_LIST_DIR}
-  ${LZ4F_INCLUDE_DIR}
 )
 
 target_link_libraries(Resource LZ4F)
