@@ -9,17 +9,20 @@ import (
 	"github.com/phoenix-engine/phx/fs"
 	"github.com/phoenix-engine/phx/gen/compress"
 	"github.com/phoenix-engine/phx/gen/cpp"
+	"github.com/phoenix-engine/phx/path"
 
 	"github.com/pkg/errors"
 )
 
 // Gen uses Operate to process files in the FS given as From, and copies
-// its output to To after processing is completed successfully.  It uses
-// a temporary buffer for staging before completion.
+// its output to To after processing is completed successfully.  It only
+// operates on names matched by the Matcher.  It uses a temporary buffer
+// for staging before completion.
 type Gen struct {
 	From, To fs.FS
 	compress.Level
 
+	path.Matcher
 	// TODO: Verbosity
 }
 
@@ -27,9 +30,16 @@ type Gen struct {
 func (g Gen) Operate() error {
 	// TODO: Describe pipelines with a graph file.
 	// TODO: Generate and check resource manifest for changes.
-	fis, err := g.From.ReadDir("")
+	prefis, err := g.From.ReadDir("")
 	if err != nil {
 		return errors.Wrapf(err, "reading %s", g.From)
+	}
+
+	var fis []os.FileInfo
+	for _, fi := range prefis {
+		if g.Match(fi.Name()) {
+			fis = append(fis, fi)
+		}
 	}
 
 	// In workers, open each file, zip and translate it into a
@@ -41,7 +51,7 @@ func (g Gen) Operate() error {
 		jobs, dones, kill, errs = MakeChans()
 
 		tmpFS   = fs.MakeSyncMem()
-		maker   = compress.LZ4Maker{g.Level}
+		maker   = compress.LZ4Maker{Level: g.Level}
 		encoder = cpp.PrepareTarget(tmpFS, maker)
 	)
 
@@ -63,7 +73,7 @@ func (g Gen) Operate() error {
 		for _, fi := range fis {
 			// TODO: Check for nested resource dirs.
 			// if fi.IsDir() { ... }
-			jobs <- Job{fi.Name()}
+			jobs <- Job{Name: fi.Name()}
 		}
 
 		close(jobs)
