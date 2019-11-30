@@ -22,6 +22,8 @@ type Gen struct {
 	From, To fs.FS
 	compress.Level
 
+	SkipFinalize bool
+
 	path.Matcher
 	// TODO: Verbosity
 }
@@ -103,9 +105,11 @@ func (g Gen) Operate() error {
 
 	tw.Flush()
 
-	if err := encoder.Finalize(); err != nil {
+	if !g.SkipFinalize {
 		// Do any last synchronous cleanup the Encoder requires.
-		return errors.Wrap(err, "finalizing Encoder")
+		if err := encoder.Finalize(); err != nil {
+			return errors.Wrap(err, "finalizing Encoder")
+		}
 	}
 
 	// All finished tmpfiles are now in the tmp destination and

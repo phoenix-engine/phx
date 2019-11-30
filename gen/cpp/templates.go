@@ -309,12 +309,21 @@ namespace res {
 `[1:]
 
 var cmakeTmp = `
-{{define "expand"}}  res/{{.VarName}}_decl.cxx{{end}}`[1:] + `
+{{define "expand"}}  res/{{.VarName}}_decl.cxx
+  res/{{.VarName}}_real.cxx{{end}}`[1:] + `
 
 cmake_minimum_required(VERSION 3.1.0 FATAL_ERROR)
 
 # Add LZ4 and LZ4F definitions.
 add_subdirectory(lz4/lib)
+
+set_source_files_properties(
+{{range .}}{{template "expand" .}}
+{{end}}
+  PROPERTIES
+    GENERATED True
+    HEADER_FILE_ONLY ON
+)
 
 # Add Resource library.
 add_library(Resource STATIC

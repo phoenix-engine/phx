@@ -26,12 +26,14 @@ import (
 )
 
 var (
-	from = new(string)
-	to   = new(string)
+	from string
+	to   string
 
 	match Regexp
 
-	level = new(int)
+	skipFinalize bool
+
+	level int
 )
 
 // genCmd represents the gen command
@@ -41,8 +43,8 @@ var genCmd = &cobra.Command{
 	Long:  ``,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		pipeline := gen.Gen{
-			From: fs.Real{Where: *from},
-			To:   fs.Real{Where: *to},
+			From: fs.Real{Where: from},
+			To:   fs.Real{Where: to},
 
 			Matcher: func() path.Matcher {
 				if match.Regexp == nil {
@@ -51,8 +53,10 @@ var genCmd = &cobra.Command{
 				return match
 			}(),
 
+			SkipFinalize: skipFinalize,
+
 			Level: func() compress.Level {
-				switch *level {
+				switch level {
 				case 0:
 					return compress.Fastest
 				case 1:
@@ -85,19 +89,24 @@ func init() {
 	)
 
 	genCmd.PersistentFlags().StringVar(
-		from, "from",
+		&from, "from",
 		"res",
 		"Where to read static resources",
 	)
 	genCmd.PersistentFlags().StringVar(
-		to, "to",
+		&to, "to",
 		"gen",
 		"Where to write generated resources",
 	)
 
 	genCmd.PersistentFlags().IntVarP(
-		level, "level", "l",
+		&level, "level", "l",
 		0,
 		"The compression level to use (0, 1, 2, 3, 9)",
+	)
+
+	genCmd.PersistentFlags().BoolVar(
+		&skipFinalize, "skip-finalize", false,
+		"Don't finalize generated files",
 	)
 }
