@@ -73,15 +73,34 @@ cmake_minimum_required(VERSION 3.1.0 FATAL_ERROR)
 # Add LZ4 and LZ4F definitions.
 add_subdirectory(lz4/lib)
 
+set_source_files_properties(
+  res/al_gif_decl.cxx
+  res/al_gif_real.cxx
+  res/al_jpg_decl.cxx
+  res/al_jpg_real.cxx
+  res/bob_gif_decl.cxx
+  res/bob_gif_real.cxx
+  res/bob_jpg_decl.cxx
+  res/bob_jpg_real.cxx
+
+  PROPERTIES
+    GENERATED True
+    HEADER_FILE_ONLY ON
+)
+
 # Add Resource library.
 add_library(Resource STATIC
   mapper.cxx
   mappings.cxx
   resource.cxx
   res/al_gif_decl.cxx
+  res/al_gif_real.cxx
   res/al_jpg_decl.cxx
+  res/al_jpg_real.cxx
   res/bob_gif_decl.cxx
+  res/bob_gif_real.cxx
   res/bob_jpg_decl.cxx
+  res/bob_jpg_real.cxx
 )
 
 target_include_directories(Resource PUBLIC
