@@ -24,6 +24,27 @@ func (m mockFS) Create(name string) (io.WriteCloser, error) {
 	return buf, nil
 }
 
+func logDiffStrings(t *testing.T, got, expect string) {
+	var line string
+	linenum := 1
+
+	for i := range expect {
+		if expect[i] != got[i] {
+			t.Logf("fs[%d](%#q) didn't match expect[%d](%#q).",
+				i, got[i], i, expect[i],
+			)
+			t.Logf("fs line %d: %#q...", linenum, line)
+			break
+		}
+		if got[i] == '\n' {
+			linenum++
+			line = ""
+		} else {
+			line += string(got[i])
+		}
+	}
+}
+
 func TestIDCreator(t *testing.T) {
 	expect := `
 #ifndef PHX_RES_ID
@@ -62,6 +83,7 @@ namespace res {
 	if fs := ff.objs["id.hpp"].String(); fs != expect {
 		t.Errorf("\n======== expected:\n%s\n\n"+
 			"======== got:\n%s", expect, fs)
+		logDiffStrings(t, fs, expect)
 		t.FailNow()
 	}
 }
@@ -70,17 +92,17 @@ func TestCMakeCreator(t *testing.T) {
 	expect := `
 cmake_minimum_required(VERSION 3.1.0 FATAL_ERROR)
 
+if(POLICY CMP0076)
+  cmake_policy(SET CMP0076 NEW)
+endif() # POLICY CMP0076
+
 # Add LZ4 and LZ4F definitions.
 add_subdirectory(lz4/lib)
 
 set_source_files_properties(
-  res/al_gif_decl.cxx
   res/al_gif_real.cxx
-  res/al_jpg_decl.cxx
   res/al_jpg_real.cxx
-  res/bob_gif_decl.cxx
   res/bob_gif_real.cxx
-  res/bob_jpg_decl.cxx
   res/bob_jpg_real.cxx
 
   PROPERTIES
@@ -89,18 +111,25 @@ set_source_files_properties(
 )
 
 # Add Resource library.
-add_library(Resource STATIC
-  mapper.cxx
-  mappings.cxx
-  resource.cxx
-  res/al_gif_decl.cxx
-  res/al_gif_real.cxx
-  res/al_jpg_decl.cxx
-  res/al_jpg_real.cxx
-  res/bob_gif_decl.cxx
-  res/bob_gif_real.cxx
-  res/bob_jpg_decl.cxx
-  res/bob_jpg_real.cxx
+add_library(Resource STATIC)
+
+target_sources(Resource
+  PUBLIC
+    mapper.cxx
+    mappings.cxx
+    resource.cxx
+  INTERFACE
+    resource.hpp
+    mapper.hpp
+  PRIVATE
+    res/al_gif_decl.cxx
+    res/al_gif_real.cxx
+    res/al_jpg_decl.cxx
+    res/al_jpg_real.cxx
+    res/bob_gif_decl.cxx
+    res/bob_gif_real.cxx
+    res/bob_jpg_decl.cxx
+    res/bob_jpg_real.cxx
 )
 
 target_include_directories(Resource PUBLIC
@@ -132,8 +161,9 @@ set_property(TARGET Resource PROPERTY CXX_STANDARD_REQUIRED ON)
 		t.Errorf("unexpected objects in FS: %+v", ff.objs)
 	}
 	if fs := ff.objs["CMakeLists.txt"].String(); fs != expect {
-		t.Errorf("\n======== expected:\n%s\n\n"+
-			"======== got:\n%s", expect, fs)
+		t.Errorf("\n======== expected:\n%s========\n"+
+			"======== got:\n%s========", expect, fs)
+		logDiffStrings(t, fs, expect)
 		t.FailNow()
 	}
 }
@@ -194,26 +224,7 @@ namespace res {
 	if fs := ff.objs["mappings.cxx"].String(); fs != expect {
 		t.Errorf("\n======== expected:\n%s"+
 			"======== got:\n%s", expect, fs)
-
-		var line string
-		linenum := 1
-
-		for i := range expect {
-			if expect[i] != fs[i] {
-				t.Logf("fs[%d](%#q) didn't match expect[%d](%#q).",
-					i, fs[i], i, expect[i],
-				)
-				t.Logf("fs line %d: %#q...", linenum, line)
-				break
-			}
-
-			if fs[i] == '\n' {
-				linenum++
-				line = ""
-			} else {
-				line += string(fs[i])
-			}
-		}
+		logDiffStrings(t, fs, expect)
 		t.FailNow()
 	}
 }
@@ -299,6 +310,7 @@ namespace res {
 	if fs := ff.objs["mapper.hpp"].String(); fs != expect {
 		t.Errorf("\n======== expected:\n%s\n\n"+
 			"======== got:\n%s", expect, fs)
+		logDiffStrings(t, fs, expect)
 		t.FailNow()
 	}
 }
