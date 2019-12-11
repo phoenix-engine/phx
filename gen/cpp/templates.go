@@ -309,16 +309,21 @@ namespace res {
 `[1:]
 
 var cmakeTmp = `
-{{define "expand"}}  res/{{.VarName}}_decl.cxx
-  res/{{.VarName}}_real.cxx{{end}}`[1:] + `
+{{define "expand_real"}}  res/{{.VarName}}_real.cxx{{end}}`[1:] + `
+{{define "expand_both"}}    res/{{.VarName}}_decl.cxx
+    res/{{.VarName}}_real.cxx{{end}}`[1:] + `
 
 cmake_minimum_required(VERSION 3.1.0 FATAL_ERROR)
+
+if(POLICY CMP0076)
+  cmake_policy(SET CMP0076 NEW)
+endif() # POLICY CMP0076
 
 # Add LZ4 and LZ4F definitions.
 add_subdirectory(lz4/lib)
 
 set_source_files_properties(
-{{range .}}{{template "expand" .}}
+{{range .}}{{template "expand_real" .}}
 {{end}}
   PROPERTIES
     GENERATED True
@@ -326,14 +331,19 @@ set_source_files_properties(
 )
 
 # Add Resource library.
-add_library(Resource STATIC
-  mapper.cxx
-  mappings.cxx
-  resource.cxx`[2:] + `
+add_library(Resource STATIC)
 
-{{range .}}{{template "expand" .}}
-{{end}}`[1:] + `
-
+target_sources(Resource
+  PUBLIC
+    mapper.cxx
+    mappings.cxx
+    resource.cxx
+  INTERFACE
+    resource.hpp
+    mapper.hpp
+  PRIVATE
+{{range .}}{{template "expand_both" .}}
+{{end}}`[2:] + `
 )
 
 target_include_directories(Resource PUBLIC
@@ -344,7 +354,7 @@ target_link_libraries(Resource LZ4F)
 
 set_property(TARGET Resource PROPERTY CXX_STANDARD 11)
 set_property(TARGET Resource PROPERTY CXX_STANDARD_REQUIRED ON)
-`[2:]
+`[1:]
 
 var gitignoreTmp = `
 cmake_install.cmake
