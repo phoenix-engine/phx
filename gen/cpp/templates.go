@@ -331,7 +331,7 @@ set_source_files_properties(
 )
 
 # Add Resource library.
-add_library(Resource STATIC)
+add_library(Resource SHARED)
 
 target_sources(Resource
   PUBLIC
